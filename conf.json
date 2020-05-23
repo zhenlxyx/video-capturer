@@ -1,8 +1,8 @@
 {
 	"show_video": true,
 	"output_folder": "output/",
-	"min_save_seconds": 0.5,
+	"min_save_seconds": 1,
 	"min_motion_frames": 2,
 	"delta_thresh": 1,
-	"min_area": 2000
+	"min_area": 1000
 }

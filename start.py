@@ -1,5 +1,5 @@
 # 用法
-# 通过网络摄像头获取视频 python start.py
+# 通过网络摄像头获取视频 python start.py --conf conf.json
 # 通过文件获取视频并加载用户配置 python start.py --video input/example_01.mp4 --conf conf.json
 
 # 导入必要的包
@@ -24,6 +24,7 @@ args = vars(ap.parse_args())
 # 过滤警告并加载配置
 warnings.filterwarnings("ignore")
 conf = json.load(open(args["conf"]))
+save_path = conf["output_folder"]
 
 # 显示欢迎信息
 print("""
@@ -40,34 +41,42 @@ print("""
 
 # 如果 video 参数为 None，从网络摄像头中读取
 if args.get("video", None) is None:
-	print("[信息] 正在读取网络摄像头...")
+	print("🕒 正在读取网络摄像头...")
 	vs = VideoStream(src=0).start()
 	auto_path = "webcam/"
 	time.sleep(2.0)
 
 # 否则，从视频文件中读取
 else:
-	print("[信息] 正在读取视频文件...")
+	print("🕒 正在读取视频文件...")
 	vs = cv2.VideoCapture(args["video"])
-	# auto_path = args.get("video", None).split("/")[1] + "/"
 	auto_path = args.get("video", None).split("/")[1].split(".")[0] + "/"
 
-# 初始化平均帧、最后保存的时间戳和帧运动计数器
+# 初始化平均帧、最后保存的时间戳、帧运动计数器和保存文件计数器
 avg = None
 lastSaved = datetime.datetime.now()
 motionCounter = 0
+saveCounter = 0
 
 # 遍历视频帧
 while True:
 	# 抓取当前帧并初始化时间戳和 Motion / No Motion 的文本
 	frame = vs.read()
+
 	frame = frame if args.get("video", None) is None else frame[1]
 	timestamp = datetime.datetime.now()
 	text = "No Motion"
 
 	# 如果无法抓取帧，则视频已播完
 	if frame is None:
-		print("\n[成功] 图像采集完毕。\n")
+		print("\n🟢 图像采集完毕。")
+
+		if saveCounter != 0:
+			print("   本次共采集 {} 张图像，保存在 {}{} 目录下。".format(saveCounter, save_path, auto_path))
+		else:
+			print("   本次没有采集到图像。")
+
+		print("\a")
 		break
 
 	# 调整帧大小，将其转换为灰度，然后使其模糊
@@ -77,7 +86,7 @@ while True:
 
 	# 如果平均帧为 None，则将其初始化
 	if avg is None:
-		print("[信息] 正在采集图像...\n")
+		print("🕒 正在采集图像...\n")
 		avg = gray.copy().astype("float")
 		continue
 
@@ -100,16 +109,17 @@ while True:
 			continue
 
 		# 计算轮廓的边界框，将其绘制在帧上，并更新文本
-		# (x, y, w, h) = cv2.boundingRect(c)
-		# cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+		(x, y, w, h) = cv2.boundingRect(c)
+		cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
 		text = "Motion"
 
 	# 在帧上绘制文本和时间戳
-	ts = timestamp.strftime("%A %d %B %Y %I %M %S %f %p")
-	# cv2.putText(frame, "Status: {}".format(text), (10, 20),
-	# 	cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
-	# cv2.putText(frame, ts, (10, frame.shape[0] - 10), cv2.FONT_HERSHEY_SIMPLEX,
-	# 	0.35, (0, 0, 255), 1)
+	timer = time.perf_counter()
+	ts = time.strftime("%H:%M:%S.", time.gmtime(timer)) + str(timer).split('.')[1][:3]
+	cv2.putText(frame, "Status: {}".format(text), (10, 20),
+		cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
+	cv2.putText(frame, ts, (10, frame.shape[0] - 10), cv2.FONT_HERSHEY_SIMPLEX,
+		0.35, (0, 0, 255), 1)
 
 	# 如果画面中有运动
 	if text == "Motion":
@@ -125,8 +135,7 @@ while True:
 				cv2.imwrite(t.path, frame)
 
 				# 将图像保存到本地磁盘并清理临时图像
-				print("[保存] {}".format(ts))
-				save_path = conf["output_folder"]
+				print("   采集 {}".format(ts))
 
 				# 如果用户未指定存储目录，将图像直接存储在当前目录下、以视频名称命名的子文件夹中
 				if save_path == "":
@@ -143,8 +152,9 @@ while True:
 						pass
 
 				path = "{save_path}{auto_path}{timestamp}.jpg".format(
-						save_path=save_path, auto_path=auto_path, timestamp=ts)
+						save_path=save_path, auto_path=auto_path, timestamp=ts.replace(':', '_').replace('.', '_'))
 				cv2.imencode('.jpg', frame)[1].tofile(path)
+				saveCounter += 1
 				t.cleanup()
 
 				# 更新上次保存的时间戳并重置运动计数器
@@ -165,7 +175,12 @@ while True:
 
 		# 如果用户按下 Q 键，则中断进程
 		if key == ord("q"):
-			print("\n[信息] 用户中断进程。\n")
+			print("\n🔴 用户中断进程。")
+
+			if saveCounter != 0:
+				print("   中断前共采集 {} 张图像，保存在 {}{} 目录下。".format(saveCounter, save_path, auto_path))
+
+			print("\a")
 			break
 
 # 停止进程并关闭所有打开的窗口
