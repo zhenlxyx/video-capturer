@@ -5,6 +5,7 @@
 # 导入必要的包
 from pyimagesearch.tempimage import TempImage # 支持保存临时文件
 from imutils.video import VideoStream 		  # 支持读取网络摄像头
+from imutils.video import FPS				  # 支持计算采集时的平均帧率
 import argparse								  # 支持命令行参数
 import warnings								  # 支持系统警告信息操作
 import datetime								  # 支持时间戳
@@ -42,37 +43,48 @@ print("""
 # 如果 video 参数为 None，从网络摄像头中读取
 if args.get("video", None) is None:
 	print("🕒 正在读取网络摄像头...")
-	vs = VideoStream(src=0).start()
+	fvs = VideoStream(src=0).start()
 	auto_path = "webcam/"
 	time.sleep(2.0)
 
 # 否则，从视频文件中读取
 else:
 	print("🕒 正在读取视频文件...")
-	vs = cv2.VideoCapture(args["video"])
+	fvs = cv2.VideoCapture(args["video"])
 	auto_path = args.get("video", None).split("/")[1].split(".")[0] + "/"
+	time.sleep(1.0)
 
-# 初始化平均帧、最后保存的时间戳、帧运动计数器和保存文件计数器
+# 初始化平均帧、最后保存的时间戳、读帧计数器、帧运动计数器、保存文件计数器和读帧计时器
 avg = None
 lastSaved = datetime.datetime.now()
+readFrameCounter = 0
 motionCounter = 0
 saveCounter = 0
+fpsTimer = FPS().start()
 
 # 遍历视频帧
 while True:
-	# 抓取当前帧并初始化时间戳和 Motion / No Motion 的文本
-	frame = vs.read()
-
+	# 按照用户设定的读法抓取帧，初始化时间戳和 Motion / No Motion 的文本
+	frame = fvs.read()
 	frame = frame if args.get("video", None) is None else frame[1]
+	
+	if args.get("video", None) is not None:
+		readFrameCounter += conf["read_frames"]
+		fvs.set(1, readFrameCounter)
+
 	timestamp = datetime.datetime.now()
 	text = "No Motion"
 
 	# 如果无法抓取帧，则视频已播完
 	if frame is None:
+		fpsTimer.stop()
 		print("\n🟢 图像采集完毕。")
 
 		if saveCounter != 0:
-			print("   本次共采集 {} 张图像，保存在 {}{} 目录下。".format(saveCounter, save_path, auto_path))
+			print("   总共采集：{} 张图像".format(saveCounter))
+			print("   保存位置：{}{}".format(save_path, auto_path))
+			print("   采集用时：{:.2f} 秒".format(fpsTimer.elapsed()))
+			print("   平均帧率：{:.2f} fps".format(fpsTimer.fps()))
 		else:
 			print("   本次没有采集到图像。")
 
@@ -113,13 +125,25 @@ while True:
 		cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
 		text = "Motion"
 
-	# 在帧上绘制文本和时间戳
-	timer = time.perf_counter()
+	# 如果读取视频文件，则使用视频播放时间，并显示帧编号
+	if args.get("video", None) is not None:
+		cf = int(fvs.get(cv2.CAP_PROP_POS_FRAMES))
+		fc = int(fvs.get(cv2.CAP_PROP_FRAME_COUNT))
+		fps = fvs.get(cv2.CAP_PROP_FPS)
+		timer = cf / fps
+		cv2.putText(frame, "Frame: {} of {}".format(cf, fc), (10, frame.shape[0] - 30), cv2.FONT_HERSHEY_SIMPLEX,
+			0.35, (0, 0, 255), 1)
+
+	# 否则，使用现实中的时间
+	else:
+		timer = time.perf_counter()
+
+	# 在帧上绘制文本、时间戳和运动侦测状态
 	ts = time.strftime("%H:%M:%S.", time.gmtime(timer)) + str(timer).split('.')[1][:3]
+	cv2.putText(frame, "Time: {}".format(ts), (10, frame.shape[0] - 10), cv2.FONT_HERSHEY_SIMPLEX,
+		0.35, (0, 0, 255), 1)
 	cv2.putText(frame, "Status: {}".format(text), (10, 20),
 		cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
-	cv2.putText(frame, ts, (10, frame.shape[0] - 10), cv2.FONT_HERSHEY_SIMPLEX,
-		0.35, (0, 0, 255), 1)
 
 	# 如果画面中有运动
 	if text == "Motion":
@@ -172,17 +196,22 @@ while True:
 		cv2.imshow("Thresh", thresh)
 		cv2.imshow("Frame Delta", frameDelta)
 		key = cv2.waitKey(1) & 0xFF
+		fpsTimer.update()
 
 		# 如果用户按下 Q 键，则中断进程
 		if key == ord("q"):
+			fpsTimer.stop()
 			print("\n🔴 用户中断进程。")
 
 			if saveCounter != 0:
-				print("   中断前共采集 {} 张图像，保存在 {}{} 目录下。".format(saveCounter, save_path, auto_path))
+				print("   总共采集：{} 张图像".format(saveCounter))
+				print("   保存位置：{}{}".format(save_path, auto_path))
+				print("   采集用时：{:.2f} 秒".format(fpsTimer.elapsed()))
+				print("   平均帧率：{:.2f} fps".format(fpsTimer.fps()))
 
 			print("\a")
 			break
 
 # 停止进程并关闭所有打开的窗口
-vs.stop() if args.get("video", None) is None else vs.release()
+fvs.stop() if args.get("video", None) is None else fvs.release()
 cv2.destroyAllWindows()

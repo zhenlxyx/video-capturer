@@ -2,7 +2,7 @@
 	"show_video": true,
 	"output_folder": "output/",
 	"read_frames": 1,
-	"capture_type": "mean", 
+	"capture_type": "avg", 
 	"capture_frames": "all",
 	"min_save_seconds": 1,
 	"min_motion_frames": 2,
