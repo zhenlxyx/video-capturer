@@ -56,7 +56,6 @@ else:
 
 # 初始化平均帧、最后保存的时间戳、读帧计数器、帧运动计数器、保存文件计数器和读帧计时器
 avg = None
-lastSaved = datetime.datetime.now()
 readFrameCounter = 0
 motionCounter = 0
 saveCounter = 0
@@ -64,7 +63,7 @@ fpsTimer = FPS().start()
 
 # 遍历视频帧
 while True:
-	# 按照用户设定的读法抓取帧，初始化时间戳和 Motion / No Motion 的文本
+	# 按照用户设定的读法抓取帧（只对视频文件有效），初始化时间戳和 Motion / No Motion 的文本
 	frame = fvs.read()
 	frame = frame if args.get("video", None) is None else frame[1]
 	
@@ -74,6 +73,18 @@ while True:
 
 	timestamp = datetime.datetime.now()
 	text = "No Motion"
+
+	# 如果用户指定了无效的参数，则中止图像采集
+	if (conf["capture_images"][0] == "all") or (conf["capture_images"][0] == "frame") or (conf["capture_images"][0] == "second"):
+		pass
+	else:
+		fvs.stop() if args.get("video", None) is None else fvs.release()
+		print("\n🔴 图像采集方法的指定参数无效，图像采集已中止。")
+		print("   参数应为：['采集方式', 采集数值 1, 采集数值 2]。")
+		print("   采集方式包括：all（应采尽采），frame（按帧采集），second（按秒采集）。")
+		
+		print("\a")
+		break
 
 	# 如果无法抓取帧，则视频已播完
 	if frame is None:
@@ -125,7 +136,7 @@ while True:
 		cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
 		text = "Motion"
 
-	# 如果读取视频文件，则使用视频播放时间，并显示帧编号
+	# 如果从视频文件中读取，则使用视频播放时间，并显示帧编号
 	if args.get("video", None) is not None:
 		cf = int(fvs.get(cv2.CAP_PROP_POS_FRAMES))
 		fc = int(fvs.get(cv2.CAP_PROP_FRAME_COUNT))
@@ -147,43 +158,63 @@ while True:
 
 	# 如果画面中有运动
 	if text == "Motion":
-		# 检查保存之间是否经过了足够的时间
-		if (timestamp - lastSaved).seconds >= conf["min_save_seconds"]:
-			# 增加运动计数
-			motionCounter += 1
 
-			# 检查连贯运动的帧数是否足够多
-			if motionCounter >= conf["min_motion_frames"]:
-				# 将图像写入临时文件
-				t = TempImage()
+		# 增加运动计数
+		motionCounter += 1
+		motionBeginTime = datetime.datetime.now()
+
+		# 将图像写入临时文件
+		t = TempImage()
+
+		# 如果用户设定应采尽采，则按照用户设定的频率采集图像
+		if conf["capture_images"][0] == "all":
+			readFrameCounter += conf["capture_images"][1] - 10
+			fvs.set(1, readFrameCounter)
+			cv2.imwrite(t.path, frame)
+
+		# 如果用户设定按帧采集，则按照用户设定的帧数采集图像
+		elif conf["capture_images"][0] == "frame":
+			readFrameCounter += 1 - 10
+			fvs.set(1, readFrameCounter)
+			while readFrameCounter <= conf["capture_images"][1]:
 				cv2.imwrite(t.path, frame)
 
-				# 将图像保存到本地磁盘并清理临时图像
-				print("   采集 {}".format(ts))
+		# 如果用户设定按秒采集，则按照用户设定的秒数采集图像，采集频率将为逐帧
+		elif conf["capture_images"][0] == "second":
+			readFrameCounter += conf["capture_images"][2] - 10
+			fvs.set(1, readFrameCounter)
+			while (timestamp - motionBeginTime).seconds <= conf["capture_images"][1]:
+				cv2.imwrite(t.path, frame)
 
-				# 如果用户未指定存储目录，将图像直接存储在当前目录下、以视频名称命名的子文件夹中
-				if save_path == "":
-					try:
-						os.mkdir(auto_path)
-					except FileExistsError:
-						pass
+		# 如果用户未指定存储目录，将图像直接存储在当前目录下、以视频名称命名的子文件夹中
+		if save_path == "":
+			try:
+				os.mkdir(auto_path)
+			except FileExistsError:
+				pass
 
-				# 否则，将图像存储在用户指定目录下的、以视频名称命名的子文件夹中
-				else:
-					try:
-						os.makedirs(save_path + auto_path)
-					except FileExistsError:
-						pass
+		# 否则，将图像存储在用户指定目录下的、以视频名称命名的子文件夹中
+		else:
+			try:
+				os.makedirs(save_path + auto_path)
+			except FileExistsError:
+				pass
 
-				path = "{save_path}{auto_path}{timestamp}.jpg".format(
+		path = "{save_path}{auto_path}{timestamp}.jpg".format(
 						save_path=save_path, auto_path=auto_path, timestamp=ts.replace(':', '_').replace('.', '_'))
-				cv2.imencode('.jpg', frame)[1].tofile(path)
-				saveCounter += 1
-				t.cleanup()
+		cv2.imencode('.jpg', frame)[1].tofile(path)
+		saveCounter += 1
 
-				# 更新上次保存的时间戳并重置运动计数器
-				lastSaved = timestamp
-				motionCounter = 0
+		try:
+			t.cleanup()
+		except FileNotFoundError:
+			pass
+
+		# 重置运动计数器、重置为用户设定的读法
+		print("   采集 {}".format(ts))
+		motionCounter = 0
+		readFrameCounter += conf["read_frames"]
+		fvs.set(1, readFrameCounter)
 
 	# 如果画面中无运动
 	else:

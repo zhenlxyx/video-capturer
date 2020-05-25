@@ -1,11 +1,9 @@
 {
 	"show_video": true,
 	"output_folder": "output/",
-	"read_frames": 1,
+	"read_frames": 5,
 	"capture_type": "avg", 
-	"capture_frames": "all",
-	"min_save_seconds": 1,
-	"min_motion_frames": 2,
-	"delta_thresh": 1,
-	"min_area": 1000
+	"capture_images": ["second", 5, 2],
+	"delta_thresh": 5,
+	"min_area": 1500
 }
