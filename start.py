@@ -54,8 +54,10 @@ else:
 	auto_path = args.get("video", None).split("/")[1].split(".")[0] + "/"
 	time.sleep(1.0)
 
-# 初始化平均帧、最后保存的时间戳、读帧计数器、帧运动计数器、保存文件计数器和读帧计时器
+# 初始化平均帧、当前帧的前两帧、最后保存的时间戳、读帧计数器、帧运动计数器、保存文件计数器和读帧计时器
 avg = None
+lastFrame1 = None
+lastFrame2 = None
 readFrameCounter = 0
 motionCounter = 0
 saveCounter = 0
@@ -107,20 +109,80 @@ while True:
 	gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 	gray = cv2.GaussianBlur(gray, (21, 21), 0)
 
-	# 如果平均帧为 None，则将其初始化
-	if avg is None:
-		print("🕒 正在采集图像...\n")
-		avg = gray.copy().astype("float")
-		continue
+	# 如果用户指定的图像采集算法为多帧加权平均法
+	if conf["capture_type"] == "avg":
 
-	# 累加当前帧和先前帧之间的加权平均值，然后计算当前帧和此动态平均值之间的差
-	cv2.accumulateWeighted(gray, avg, 0.5)
-	frameDelta = cv2.absdiff(gray, cv2.convertScaleAbs(avg))
+		# 如果平均帧为 None，则将其初始化
+		if avg is None:
+			print("🕒 正在采集图像...\n")
+			avg = gray.copy().astype("float")
+			continue
 
-	# 对增量图像进行阈值处理，对阈值图像进行扩张以填充孔洞，然后对阈值图像取轮廓
-	thresh = cv2.threshold(frameDelta, conf["delta_thresh"], 255,
-		cv2.THRESH_BINARY)[1]
-	thresh = cv2.dilate(thresh, None, iterations=2)
+		# 累加当前帧和先前帧之间的加权平均值，然后计算当前帧和此动态平均值之间的差
+		cv2.accumulateWeighted(gray, avg, 0.5)
+		frameDelta = cv2.absdiff(gray, cv2.convertScaleAbs(avg))
+
+		# 对增量图像进行阈值处理，对阈值图像进行扩张以填充孔洞
+		thresh = cv2.threshold(frameDelta, conf["delta_thresh"], 255,
+			cv2.THRESH_BINARY)[1]
+		thresh = cv2.dilate(thresh, None, iterations=2)
+
+	# 如果用户指定的图像采集算法为二帧差分法
+	elif conf["capture_type"] == "two":
+		
+		# 如果前一帧为 None，则将其初始化 
+		if lastFrame1 is None: 
+			print("🕒 正在采集图像...\n")
+			lastFrame1 = frame 
+			continue 
+	
+		# 计算当前帧和前一帧的不同 
+		frameDelta = cv2.absdiff(lastFrame1, frame) 
+	
+		# 当前帧设置为下一帧的前一帧 
+		lastFrame1 = frame.copy() 
+	
+		# 结果转为灰度图 
+		thresh = cv2.cvtColor(frameDelta, cv2.COLOR_BGR2GRAY) 
+	
+		# 图像二值化 
+		thresh = cv2.threshold(thresh, conf["delta_thresh"], 255, cv2.THRESH_BINARY)[1] 
+	
+	# 如果用户指定的图像采集算法为三帧差分法
+	elif conf["capture_type"] == "three":
+
+		# 如果前二帧为 None，则将其初始化，并计算前两帧的不同
+		if lastFrame2 is None:
+			print("🕒 正在采集图像...\n")
+			if lastFrame1 is None:
+				lastFrame1 = frame
+			else:
+				lastFrame2 = frame
+				global frameDelta1  # 全局变量
+				frameDelta1 = cv2.absdiff(lastFrame1, lastFrame2)  # 帧差一
+			continue
+
+		# 计算当前帧和前两帧的不同，计算三帧差分
+		frameDelta = cv2.absdiff(lastFrame2, frame)  # 帧差二
+		thresh = cv2.bitwise_and(frameDelta1, frameDelta)  # 图像与运算
+		thresh2 = thresh.copy()
+
+		# 当前帧设置为下一帧的前一帧，前一帧设为下一帧的前二帧，帧差二设为帧差一
+		lastFrame1 = lastFrame2
+		lastFrame2 = frame.copy()
+		frameDelta1 = frameDelta
+
+		# 结果转为灰度图
+		thresh = cv2.cvtColor(thresh, cv2.COLOR_BGR2GRAY)
+
+		# 图像二值化
+		thresh = cv2.threshold(thresh, conf["delta_thresh"], 255, cv2.THRESH_BINARY)[1]
+
+		# 去除图像噪声，先腐蚀再膨胀（形态学开运算）
+		thresh = cv2.dilate(thresh, None, iterations=3)
+		thresh = cv2.erode(thresh, None, iterations=1)
+
+	# 对阈值图像取轮廓
 	cnts = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL,
 		cv2.CHAIN_APPROX_SIMPLE)
 	cnts = imutils.grab_contours(cnts)
