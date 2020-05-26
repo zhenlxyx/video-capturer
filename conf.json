@@ -3,7 +3,7 @@
 	"output_folder": "output/",
 	"read_frames": 5,
 	"capture_type": "avg", 
-	"capture_images": ["second", 5, 2],
+	"capture_images": ["second", 20, 12.5],
 	"delta_thresh": 5,
 	"min_area": 1500
 }

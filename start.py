@@ -166,25 +166,31 @@ while True:
 		# 将图像写入临时文件
 		t = TempImage()
 
-		# 如果用户设定应采尽采，则按照用户设定的频率采集图像
-		if conf["capture_images"][0] == "all":
-			readFrameCounter += conf["capture_images"][1] - 10
-			fvs.set(1, readFrameCounter)
+		# 如果从网络摄像头中读取，则忽略用户设定，采集频率为逐帧
+		if args.get("video", None) is None:
 			cv2.imwrite(t.path, frame)
 
-		# 如果用户设定按帧采集，则按照用户设定的帧数采集图像
-		elif conf["capture_images"][0] == "frame":
-			readFrameCounter += 1 - 10
-			fvs.set(1, readFrameCounter)
-			while readFrameCounter <= conf["capture_images"][1]:
+		# 否则，尊重用户设定采集图像
+		else:
+			# 如果用户设定应采尽采，则按照用户设定的频率采集图像
+			if conf["capture_images"][0] == "all":
+				readFrameCounter += conf["capture_images"][1] - 10
+				fvs.set(1, readFrameCounter)
 				cv2.imwrite(t.path, frame)
 
-		# 如果用户设定按秒采集，则按照用户设定的秒数采集图像，采集频率将为逐帧
-		elif conf["capture_images"][0] == "second":
-			readFrameCounter += conf["capture_images"][2] - 10
-			fvs.set(1, readFrameCounter)
-			while (timestamp - motionBeginTime).seconds <= conf["capture_images"][1]:
-				cv2.imwrite(t.path, frame)
+			# 如果用户设定按帧采集，则按照用户设定的帧数采集图像
+			elif conf["capture_images"][0] == "frame":
+				readFrameCounter += 1 - 10
+				fvs.set(1, readFrameCounter)
+				while readFrameCounter <= conf["capture_images"][1]:
+					cv2.imwrite(t.path, frame)
+
+			# 如果用户设定按秒采集，则按照用户设定的秒数和频率采集图像
+			elif conf["capture_images"][0] == "second":
+				readFrameCounter += conf["capture_images"][2] - 10
+				fvs.set(1, readFrameCounter)
+				while (timestamp - motionBeginTime).seconds <= conf["capture_images"][1]:
+					cv2.imwrite(t.path, frame)
 
 		# 如果用户未指定存储目录，将图像直接存储在当前目录下、以视频名称命名的子文件夹中
 		if save_path == "":
@@ -210,11 +216,13 @@ while True:
 		except FileNotFoundError:
 			pass
 
-		# 重置运动计数器、重置为用户设定的读法
+		# 重置运动计数器、重置为用户设定的读法（只对视频文件有效）
 		print("   采集 {}".format(ts))
 		motionCounter = 0
-		readFrameCounter += conf["read_frames"]
-		fvs.set(1, readFrameCounter)
+		
+		if args.get("video", None) is not None:
+			readFrameCounter += conf["read_frames"]
+			fvs.set(1, readFrameCounter)
 
 	# 如果画面中无运动
 	else:
