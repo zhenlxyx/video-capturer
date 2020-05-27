@@ -50,8 +50,8 @@ if args.get("video", None) is None:
 # 否则，从视频文件中读取
 else:
 	print("🕒 正在读取视频文件...")
-	fvs = cv2.VideoCapture(args["video"])
-	auto_path = args.get("video", None).split("/")[1].split(".")[0] + "/"
+	fvs = cv2.VideoCapture("input/" + args["video"])
+	auto_path = args.get("video", None).split(".")[0] + "/"
 	time.sleep(1.0)
 
 # 初始化平均帧、当前帧的前两帧、最后保存的时间戳、读帧计数器、帧运动计数器、保存文件计数器和读帧计时器
