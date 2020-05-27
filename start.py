@@ -1,6 +1,6 @@
 # 用法
 # 通过网络摄像头获取视频 python start.py --conf conf.json
-# 通过文件获取视频并加载用户配置 python start.py --video input/example_01.mp4 --conf conf.json
+# 通过文件获取视频并加载用户配置 python start.py --video example_01.mp4 --conf conf.json
 
 # 导入必要的包
 from pyimagesearch.tempimage import TempImage # 支持保存临时文件
@@ -76,14 +76,25 @@ while True:
 	timestamp = datetime.datetime.now()
 	text = "No Motion"
 
-	# 如果用户指定了无效的参数，则中止图像采集
+	# 如果用户指定了无效的采集算法，则中止图像采集
+	if (conf["capture_type"] == "avg") or (conf["capture_type"] == "two") or (conf["capture_type"] == "three"):
+		pass
+	else:
+		fvs.stop() if args.get("video", None) is None else fvs.release()
+		print("\n🔴 图像采集已中止，因为 capture_type 参数无效。")
+		print("   采集算法：avg（多帧加权平均法），two（二帧差分法），three（三帧差分法）。")
+		
+		print("\a")
+		break
+
+	# 如果用户指定了无效的采集方式，则中止图像采集
 	if (conf["capture_images"][0] == "all") or (conf["capture_images"][0] == "frame") or (conf["capture_images"][0] == "second"):
 		pass
 	else:
 		fvs.stop() if args.get("video", None) is None else fvs.release()
-		print("\n🔴 图像采集方法的指定参数无效，图像采集已中止。")
-		print("   参数应为：['采集方式', 采集数值 1, 采集数值 2]。")
-		print("   采集方式包括：all（应采尽采），frame（按帧采集），second（按秒采集）。")
+		print("\n🔴 图像采集已中止，因为 capture_images 参数无效。")
+		print("   参数格式：['采集方式', 采集数值 1, 采集数值 2]。")
+		print("   采集方式：all（应采尽采），frame（按帧采集），second（按秒采集）。")
 		
 		print("\a")
 		break
