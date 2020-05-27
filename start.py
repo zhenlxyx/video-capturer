@@ -104,8 +104,9 @@ while True:
 		print("\a")
 		break
 
-	# 调整帧大小，将其转换为灰度，然后使其模糊
+	# 调整帧大小、复制当前帧（为了保存无标注的图片）、将其转换为灰度，然后使其模糊
 	frame = imutils.resize(frame, width=500)
+	frameOriginal = frame.copy()
 	gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 	gray = cv2.GaussianBlur(gray, (21, 21), 0)
 
@@ -133,7 +134,7 @@ while True:
 		# 如果前一帧为 None，则将其初始化 
 		if lastFrame1 is None: 
 			print("🕒 正在采集图像...\n")
-			lastFrame1 = frame 
+			lastFrame1 = frame
 			continue 
 	
 		# 计算当前帧和前一帧的不同 
@@ -270,7 +271,12 @@ while True:
 
 		path = "{save_path}{auto_path}{timestamp}.jpg".format(
 						save_path=save_path, auto_path=auto_path, timestamp=ts.replace(':', '_').replace('.', '_'))
-		cv2.imencode('.jpg', frame)[1].tofile(path)
+
+		if conf["save_annotations"]:
+			cv2.imencode('.jpg', frame)[1].tofile(path)
+		else:
+			cv2.imencode('.jpg', frameOriginal)[1].tofile(path)
+
 		saveCounter += 1
 
 		try:
