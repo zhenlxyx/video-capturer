@@ -115,9 +115,9 @@ for n in range(len(fileList)):
 
 			break
 
-		# 调整帧大小、复制当前帧（为了保存无标注的图片）、将其转换为灰度，然后使其模糊
-		frame = imutils.resize(frame, width=500)
+		# 复制当前帧（为了保存无标注的图片）、调整帧大小、将其转换为灰度，然后使其模糊
 		frameOriginal = frame.copy()
+		frame = imutils.resize(frame, width=500)
 		gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 		gray = cv2.GaussianBlur(gray, (21, 21), 0)
 
