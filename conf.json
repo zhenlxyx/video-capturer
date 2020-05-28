@@ -3,9 +3,9 @@
 	"show_detail": false, 
 	"input_folder": "input/",
 	"output_folder": "output/",
-	"read_frames": 5,
+	"read_frames": 1,
 	"capture_type": "avg", 
-	"capture_images": ["all", 2, 0],
+	"capture_images": ["all", 1, 0],
 	"save_annotations": false,
 	"delta_thresh": 5,
 	"min_area": 1500
