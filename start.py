@@ -224,12 +224,12 @@ for n in range(len(fileList)):
 		fps = fvs.get(cv2.CAP_PROP_FPS)
 		timer = cf / fps
 		cv2.putText(frame, "Frame: {} of {}".format(cf, fc), (10, frame.shape[0] - 30), cv2.FONT_HERSHEY_SIMPLEX,
-			0.35, (0, 0, 255), 1)
+			0.45, (0, 0, 255), 1)
 
 		# 在帧上绘制文本、时间戳和运动侦测状态
 		ts = time.strftime("%H:%M:%S.", time.gmtime(timer)) + str(timer).split('.')[1][:3]
 		cv2.putText(frame, "Time: {}".format(ts), (10, frame.shape[0] - 10), cv2.FONT_HERSHEY_SIMPLEX,
-			0.35, (0, 0, 255), 1)
+			0.45, (0, 0, 255), 1)
 		cv2.putText(frame, "Status: {}".format(text), (10, 20),
 			cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
 
