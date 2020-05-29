@@ -1,5 +1,6 @@
 # 用法
 # 通过文件获取视频并加载用户配置 python start.py --conf conf.json
+# 通过文件获取视频并加载用户配置，静音所有终端消息 pythonw start.py --conf conf.json
 
 # 导入必要的包
 from pyimagesearch.tempimage import TempImage # 支持保存临时文件

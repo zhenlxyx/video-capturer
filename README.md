@@ -9,7 +9,7 @@
 
 ## 开始使用之前
 
-1. 安装 Python 环境
+1. 安装 Miniconda（Python）
 
    打开 Microsoft Store 应用，搜索“Python”并下载 Python 3.7 / 3.8。
 
