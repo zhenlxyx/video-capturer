@@ -1,0 +1,12 @@
+{
+	"show_video": true,
+	"show_detail": false, 
+	"input_folder": "input/",
+	"output_folder": "output/",
+	"read_frames": 5,
+	"capture_type": "three", 
+	"capture_images": ["all", 2, 0],
+	"save_annotations": true,
+	"delta_thresh": 5,
+	"min_area": 1500
+}

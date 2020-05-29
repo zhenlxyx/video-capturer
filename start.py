@@ -1,6 +1,8 @@
 # 用法
-# 通过文件获取视频并加载用户配置 python start.py --conf conf.json
-# 通过文件获取视频并加载用户配置，静音所有终端消息 pythonw start.py --conf conf.json
+# 正常启动，加载 conf.json 配置文件 python start.py
+# 静默启动，加载 conf.json 配置文件 pythonw start.py
+# 正常启动，加载用户自定义的配置文件 python start.py --conf conf_2.json
+# 静默启动，加载用户自定义的配置文件 pythonw start.py --conf conf_2.json
 
 # 导入必要的包
 from pyimagesearch.tempimage import TempImage # 支持保存临时文件
@@ -18,13 +20,18 @@ from os.path import isfile, join			  # 支持文件操作
 
 # 构造命令行参数解析器并解析参数
 ap = argparse.ArgumentParser()
-ap.add_argument("-c", "--conf", required=True,
+ap.add_argument("-c", "--conf", 
 	help="JSON 用户配置文件的路径")
 args = vars(ap.parse_args())
 
 # 过滤警告并加载配置
 warnings.filterwarnings("ignore")
-conf = json.load(open(args["conf"]))
+
+if args.get("conf", None) is None:
+	conf = json.load(open("conf.json"))
+else:
+	conf = json.load(open(args["conf"]))
+
 save_path = conf["output_folder"]
 fileList = [f for f in listdir(conf["input_folder"]) if isfile(join(conf["input_folder"], f)) and not f.startswith('.')]
 
@@ -273,13 +280,17 @@ for n in range(len(fileList)):
 			path = "{save_path}{auto_path}{timestamp}.jpg".format(
 							save_path=save_path, auto_path=auto_path, timestamp=ts.replace(':', '_').replace('.', '_'))
 
+			# 如果用户设定保存采集批注，则保存带有批注的压缩图像
 			if conf["save_annotations"]:
 				cv2.imencode('.jpg', frame)[1].tofile(path)
+
+			# 如果用户设定不保存采集批注，则保存不带批注的原始图像
 			else:
 				cv2.imencode('.jpg', frameOriginal)[1].tofile(path)
 
 			saveCounter += 1
 
+			# 清除临时文件
 			try:
 				t.cleanup()
 			except FileNotFoundError:
