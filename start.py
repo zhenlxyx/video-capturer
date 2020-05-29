@@ -7,6 +7,8 @@
 # 导入必要的包
 import argparse								  # 支持命令行参数
 import warnings								  # 支持系统警告信息操作
+import io									  # 支持输入输出选项
+import sys									  # 支持日志等系统操作
 import datetime								  # 支持时间戳
 import imutils								  # OpenCV 和 Python 进行图像操作的简便函数集
 import json									  # 支持用户配置
@@ -35,6 +37,65 @@ else:
 save_path = conf["output_folder"]
 fileList = [f for f in listdir(conf["input_folder"]) if isfile(join(conf["input_folder"], f)) and not f.startswith('.')]
 
+startTime = datetime.datetime.now()
+logFileName = time.strftime("%H:%M:%S.").replace(':', '_').replace('.', '_')
+
+# 同时在终端显示结果，并保存到日志文件
+class __redirection__:
+    
+    def __init__(self):
+        self.buflist =[]
+        self.__console__=sys.stdout
+        
+    def write(self, output_stream):
+        self.buflist.append(out_stream)
+        
+    def to_console(self):
+        sys.stdout=self.__console__
+        print(self.buflist)
+    
+    def flush(self):
+        self.buflist=[]
+        
+    def reset(self):
+        sys.stdout=self.__console__
+        
+
+if __name__=="__main__":
+    # redirection
+    r_obj=__redirection__()
+    sys.stdout=r_obj
+    
+    # redirect to console
+    r_obj.to_console()
+    
+    # flush buffer
+    r_obj.flush()
+    
+    # reset
+    r_obj.reset()
+
+class Logger(object):
+    def __init__(self, logFile ="Default.log"):
+        self.terminal = sys.stdout
+        self.log = open(logFile,'a')
+ 
+    def write(self,message):
+        self.terminal.write(message)
+        self.log.write(message)
+ 
+    def flush(self):
+        pass
+
+# 如果用户指定了保存日志文件，则保存之
+if conf["save_log"]:
+	try:
+		os.mkdir("log/")
+	except FileExistsError:
+		pass
+	
+	sys.stdout = Logger("log/{}.log".format(logFileName))
+
 # 显示欢迎信息
 print("""
 
@@ -50,15 +111,14 @@ print("""
 """)
 
 # 进程开始时间
-startTime = datetime.datetime.now()
-print("\n   本次采集开始于 {}。\n".format(startTime))
+print("\n[i] 本次采集开始于 {}。\n".format(startTime))
 
 for n in range(len(fileList)):
 	f = fileList[n]
 	file = conf["input_folder"] + f
 
 	# 从视频文件中读取
-	print("\n🕒 正在读取 ({}/{})：{}...".format(n + 1, len(fileList), f))
+	print("\n[i] 正在读取 ({}/{})：{}...".format(n + 1, len(fileList), f))
 	fvs = cv2.VideoCapture(file)
 	auto_path = f.split(".")[0] + "/"
 	time.sleep(1.0)
@@ -93,8 +153,8 @@ for n in range(len(fileList)):
 			pass
 		else:
 			fvs.release()
-			print("\n\n🔴 图像采集已中止，因为 capture_type 参数无效。")
-			print("   采集算法：avg（多帧加权平均法），two（二帧差分法），three（三帧差分法）。")
+			print("\n\n[x] 图像采集已中止，因为 capture_type 参数无效。")
+			print("    采集算法：avg（多帧加权平均法），two（二帧差分法），three（三帧差分法）。")
 			
 			print("\a")
 			break
@@ -104,9 +164,9 @@ for n in range(len(fileList)):
 			pass
 		else:
 			fvs.release()
-			print("\n\n🔴 图像采集已中止，因为 capture_images 参数无效。")
-			print("   参数格式：['采集方式', 采集数值 1, 采集数值 2]。")
-			print("   采集方式：all（应采尽采），frame（按帧采集），second（按秒采集）。")
+			print("\n\n[x] 图像采集已中止，因为 capture_images 参数无效。")
+			print("    参数格式：['采集方式', 采集数值 1, 采集数值 2]。")
+			print("    采集方式：all（应采尽采），frame（按帧采集），second（按秒采集）。")
 			
 			print("\a")
 			break
@@ -115,23 +175,23 @@ for n in range(len(fileList)):
 		if frame is None:
 			n += 1
 			fpsTimer.stop()
-			print("\n\n🔵 {} 采集完毕。".format(f))
+			print("\n\n[i] {} 采集完毕。".format(f))
 
 			if saveCounter != 0:
-				print("   总共采集：{} 张图像".format(saveCounter))
-				print("   保存位置：{}{}".format(save_path, auto_path))
-				print("   采集用时：{:.2f} 秒".format(fpsTimer.elapsed()))
-				print("   平均帧率：{:.2f} fps\n".format(fpsTimer.fps()))
+				print("    总共采集：{} 张图像".format(saveCounter))
+				print("    保存位置：{}{}".format(save_path, auto_path))
+				print("    采集用时：{:.2f} 秒".format(fpsTimer.elapsed()))
+				print("    平均帧率：{:.2f} fps\n".format(fpsTimer.fps()))
 			else:
-				print("   本次没有采集到图像。")
+				print("    本次没有采集到图像。")
 
 			if n == len(fileList):
-				print("\n🟢 图像采集已全部完成。")
+				print("\n[v] 图像采集已全部完成。")
 				
 				# 进程结束时间
 				finishTime = datetime.datetime.now()
 				timePassed = finishTime - startTime
-				print("   本次采集完成于 {}，共耗时 {}。".format(finishTime, timePassed))
+				print("    本次采集完成于 {}，共耗时 {}。".format(finishTime, timePassed))
 				print("\a")
 
 			break
@@ -147,7 +207,7 @@ for n in range(len(fileList)):
 
 			# 如果平均帧为 None，则将其初始化
 			if avg is None:
-				print("\n🕒 正在采集图像...")
+				print("\n[i] 正在采集图像...")
 				avg = gray.copy().astype("float")
 				continue
 
@@ -165,7 +225,7 @@ for n in range(len(fileList)):
 			
 			# 如果前一帧为 None，则将其初始化 
 			if lastFrame1 is None: 
-				print("\n🕒 正在采集图像...")
+				print("\n[i] 正在采集图像...")
 				lastFrame1 = frame
 				continue 
 		
@@ -186,7 +246,7 @@ for n in range(len(fileList)):
 
 			# 如果前二帧为 None，则将其初始化，并计算前两帧的不同
 			if lastFrame2 is None:
-				print("\n🕒 正在采集图像...")
+				print("\n[i] 正在采集图像...")
 				if lastFrame1 is None:
 					lastFrame1 = frame
 				else:
@@ -246,7 +306,7 @@ for n in range(len(fileList)):
 		# 计算当前视频的采集进度
 		for i in range(1):
 			percent = cf / fc * 100.0
-			print("\r   "+str('%.1f'%percent)+"%", end="")
+			print("\r    "+str('%.1f'%percent)+"%", end="")
 
 		# 如果画面中有运动
 		if text == "Motion":
@@ -313,7 +373,7 @@ for n in range(len(fileList)):
 
 			# 重置运动计数器、重置为用户设定的读法
 			if conf["show_detail"]:
-				print(" - 采集 {}".format(ts))
+				print("... 采集 {}".format(ts))
 
 			motionCounter = 0	
 			readFrameCounter += conf["read_frames"]
@@ -335,14 +395,14 @@ for n in range(len(fileList)):
 			# 如果用户按下 Q 键，则中断进程
 			if key == ord("q"):
 				fpsTimer.stop()
-				print("\n\n🔴 用户中断进程。")
-				print("   {} 采集提前结束。".format(f))
+				print("\n\n[x] 用户中断进程。")
+				print("    {} 采集提前结束。".format(f))
 
 				if saveCounter != 0:
-					print("   总共采集：{} 张图像".format(saveCounter))
-					print("   保存位置：{}{}".format(save_path, auto_path))
-					print("   采集用时：{:.2f} 秒".format(fpsTimer.elapsed()))
-					print("   平均帧率：{:.2f} fps".format(fpsTimer.fps()))
+					print("    总共采集：{} 张图像".format(saveCounter))
+					print("    保存位置：{}{}".format(save_path, auto_path))
+					print("    采集用时：{:.2f} 秒".format(fpsTimer.elapsed()))
+					print("    平均帧率：{:.2f} fps".format(fpsTimer.fps()))
 
 				print("\a")
 				break
