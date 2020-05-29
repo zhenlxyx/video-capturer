@@ -5,8 +5,6 @@
 # 静默启动，加载用户自定义的配置文件 pythonw start.py --conf conf_2.json
 
 # 导入必要的包
-from pyimagesearch.tempimage import TempImage # 支持保存临时文件
-from imutils.video import FPS				  # 支持计算采集时的平均帧率
 import argparse								  # 支持命令行参数
 import warnings								  # 支持系统警告信息操作
 import datetime								  # 支持时间戳
@@ -17,6 +15,8 @@ import cv2									  # OpenCV
 import os									  # 支持文件和文件夹操作
 from os import listdir						  # 支持文件列表
 from os.path import isfile, join			  # 支持文件操作
+from pyimagesearch.tempimage import TempImage # 支持保存临时文件
+from imutils.video import FPS				  # 支持计算采集时的平均帧率
 
 # 构造命令行参数解析器并解析参数
 ap = argparse.ArgumentParser()
@@ -49,6 +49,10 @@ print("""
 *******************************************  |_|  ********************************
 """)
 
+# 进程开始时间
+startTime = datetime.datetime.now()
+print("\n   本次采集开始于 {}。\n".format(startTime))
+
 for n in range(len(fileList)):
 	f = fileList[n]
 	file = conf["input_folder"] + f
@@ -77,6 +81,10 @@ for n in range(len(fileList)):
 		readFrameCounter += conf["read_frames"]
 		fvs.set(1, readFrameCounter)
 
+		cf = int(fvs.get(cv2.CAP_PROP_POS_FRAMES))
+		fc = int(fvs.get(cv2.CAP_PROP_FRAME_COUNT))
+		fps = fvs.get(cv2.CAP_PROP_FPS)
+
 		timestamp = datetime.datetime.now()
 		text = "No Motion"
 
@@ -85,7 +93,7 @@ for n in range(len(fileList)):
 			pass
 		else:
 			fvs.release()
-			print("\n🔴 图像采集已中止，因为 capture_type 参数无效。")
+			print("\n\n🔴 图像采集已中止，因为 capture_type 参数无效。")
 			print("   采集算法：avg（多帧加权平均法），two（二帧差分法），three（三帧差分法）。")
 			
 			print("\a")
@@ -96,7 +104,7 @@ for n in range(len(fileList)):
 			pass
 		else:
 			fvs.release()
-			print("\n🔴 图像采集已中止，因为 capture_images 参数无效。")
+			print("\n\n🔴 图像采集已中止，因为 capture_images 参数无效。")
 			print("   参数格式：['采集方式', 采集数值 1, 采集数值 2]。")
 			print("   采集方式：all（应采尽采），frame（按帧采集），second（按秒采集）。")
 			
@@ -107,7 +115,7 @@ for n in range(len(fileList)):
 		if frame is None:
 			n += 1
 			fpsTimer.stop()
-			print("\n🔵 {} 采集完毕。".format(f))
+			print("\n\n🔵 {} 采集完毕。".format(f))
 
 			if saveCounter != 0:
 				print("   总共采集：{} 张图像".format(saveCounter))
@@ -119,6 +127,11 @@ for n in range(len(fileList)):
 
 			if n == len(fileList):
 				print("\n🟢 图像采集已全部完成。")
+				
+				# 进程结束时间
+				finishTime = datetime.datetime.now()
+				timePassed = finishTime - startTime
+				print("   本次采集完成于 {}，共耗时 {}。".format(finishTime, timePassed))
 				print("\a")
 
 			break
@@ -134,7 +147,7 @@ for n in range(len(fileList)):
 
 			# 如果平均帧为 None，则将其初始化
 			if avg is None:
-				print("🕒 正在采集图像...\n")
+				print("\n🕒 正在采集图像...")
 				avg = gray.copy().astype("float")
 				continue
 
@@ -152,7 +165,7 @@ for n in range(len(fileList)):
 			
 			# 如果前一帧为 None，则将其初始化 
 			if lastFrame1 is None: 
-				print("🕒 正在采集图像...\n")
+				print("\n🕒 正在采集图像...")
 				lastFrame1 = frame
 				continue 
 		
@@ -173,7 +186,7 @@ for n in range(len(fileList)):
 
 			# 如果前二帧为 None，则将其初始化，并计算前两帧的不同
 			if lastFrame2 is None:
-				print("🕒 正在采集图像...\n")
+				print("\n🕒 正在采集图像...")
 				if lastFrame1 is None:
 					lastFrame1 = frame
 				else:
@@ -219,9 +232,6 @@ for n in range(len(fileList)):
 			text = "Motion"
 
 		# 使用视频播放时间，并显示帧编号
-		cf = int(fvs.get(cv2.CAP_PROP_POS_FRAMES))
-		fc = int(fvs.get(cv2.CAP_PROP_FRAME_COUNT))
-		fps = fvs.get(cv2.CAP_PROP_FPS)
 		timer = cf / fps
 		cv2.putText(frame, "Frame: {} of {}".format(cf, fc), (10, frame.shape[0] - 30), cv2.FONT_HERSHEY_SIMPLEX,
 			0.45, (0, 0, 255), 1)
@@ -232,6 +242,11 @@ for n in range(len(fileList)):
 			0.45, (0, 0, 255), 1)
 		cv2.putText(frame, "Status: {}".format(text), (10, 20),
 			cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
+
+		# 计算当前视频的采集进度
+		for i in range(1):
+			percent = cf / fc * 100.0
+			print("\r   "+str('%.1f'%percent)+"%", end="")
 
 		# 如果画面中有运动
 		if text == "Motion":
@@ -298,7 +313,7 @@ for n in range(len(fileList)):
 
 			# 重置运动计数器、重置为用户设定的读法
 			if conf["show_detail"]:
-				print("   采集 {}".format(ts))
+				print(" - 采集 {}".format(ts))
 
 			motionCounter = 0	
 			readFrameCounter += conf["read_frames"]
@@ -320,7 +335,7 @@ for n in range(len(fileList)):
 			# 如果用户按下 Q 键，则中断进程
 			if key == ord("q"):
 				fpsTimer.stop()
-				print("\n🔴 用户中断进程。")
+				print("\n\n🔴 用户中断进程。")
 				print("   {} 采集提前结束。".format(f))
 
 				if saveCounter != 0:
