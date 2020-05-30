@@ -119,7 +119,7 @@ for n in range(len(fileList)):
 	file = conf["input_folder"] + f
 
 	# 从视频文件中读取
-	print("\n[i] 正在读取 ({}/{})：{}...".format(n + 1, len(fileList), f))
+	print("\n[i] 正在采集 ({}/{})：{}...".format(n + 1, len(fileList), f))
 	fvs = cv2.VideoCapture(file)
 	auto_path = f.split(".")[0] + "/"
 	time.sleep(1.0)
@@ -147,7 +147,7 @@ for n in range(len(fileList)):
 		fps = fvs.get(cv2.CAP_PROP_FPS)
 
 		timestamp = datetime.datetime.now()
-		text = "No Motion"
+		text = ""
 
 		# 如果用户指定了无效的采集算法，则中止图像采集
 		if (conf["capture_type"] == "avg") or (conf["capture_type"] == "two") or (conf["capture_type"] == "three"):
@@ -170,11 +170,19 @@ for n in range(len(fileList)):
 			print(Style.RESET_ALL + "\a") 
 			break
 
+		# 计算当前视频的采集进度
+		for i in range(1):
+			try:
+				percent = cf / fc * 100.0
+				print("\r    "+str('%.1f'%percent)+"%", end="")
+			except ZeroDivisionError:
+				pass
+
 		# 如果无法抓取帧，则视频已播完
 		if frame is None:
 			n += 1
 			fpsTimer.stop()
-			print("\n\n[i] {} 采集完毕。".format(f))
+			print("\r    100.0%...采集完毕。")
 
 			if saveCounter != 0:
 				print("    总共采集：{} 张图像".format(saveCounter))
@@ -206,7 +214,6 @@ for n in range(len(fileList)):
 
 			# 如果平均帧为 None，则将其初始化
 			if avg is None:
-				print("[i] 正在采集图像...")
 				avg = gray.copy().astype("float")
 				continue
 
@@ -224,7 +231,6 @@ for n in range(len(fileList)):
 			
 			# 如果前一帧为 None，则将其初始化 
 			if lastFrame1 is None: 
-				print("\n[i] 正在采集图像...")
 				lastFrame1 = frame
 				continue 
 		
@@ -245,7 +251,6 @@ for n in range(len(fileList)):
 
 			# 如果前二帧为 None，则将其初始化，并计算前两帧的不同
 			if lastFrame2 is None:
-				print("\n[i] 正在采集图像...")
 				if lastFrame1 is None:
 					lastFrame1 = frame
 				else:
@@ -295,17 +300,10 @@ for n in range(len(fileList)):
 		cv2.putText(frame, "Frame: {} of {}".format(cf, fc), (10, frame.shape[0] - 30), cv2.FONT_HERSHEY_SIMPLEX,
 			0.45, (0, 0, 255), 1)
 
-		# 在帧上绘制文本、时间戳和运动侦测状态
+		# 在帧上绘制文本和时间戳
 		ts = time.strftime("%H:%M:%S.", time.gmtime(timer)) + str(timer).split('.')[1][:3]
 		cv2.putText(frame, "Time: {}".format(ts), (10, frame.shape[0] - 10), cv2.FONT_HERSHEY_SIMPLEX,
 			0.45, (0, 0, 255), 1)
-		cv2.putText(frame, "Status: {}".format(text), (10, 20),
-			cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
-
-		# 计算当前视频的采集进度
-		for i in range(1):
-			percent = cf / fc * 100.0
-			print("\r    "+str('%.1f'%percent)+"%", end="")
 
 		# 如果画面中有运动
 		if text == "Motion":
@@ -382,6 +380,13 @@ for n in range(len(fileList)):
 		else:
 			motionCounter = 0
 
+		# 在帧上绘制读取进度和运动侦测状态
+		percent = cf / fc * 100.0
+		cv2.putText(frame, str('%.1f'%percent)+"%", (frame.shape[1] - 60, 20), cv2.FONT_HERSHEY_SIMPLEX,
+			0.45, (0, 255, 0), 2)
+		cv2.putText(frame, "{}".format(text), (frame.shape[1] - 65, 40),
+			cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+
 		# 检查用户是否设置在屏幕上显示视频画面
 		if conf["show_video"]:
 			# 在三个窗口中显示视频回放、阈值和帧增量
@@ -391,24 +396,36 @@ for n in range(len(fileList)):
 			key = cv2.waitKey(1) & 0xFF
 			fpsTimer.update()
 
-			# 如果用户按下 Q 键，则中断进程
+		# 如果用户按下 S 键，则跳过当前视频
+		if key == ord("s") or key == ord("q"):
+			fpsTimer.stop()
+			finishTime = datetime.datetime.now()
+
+			if key == ord("s"):
+				print(Fore.RED + "\n    用户于 {} 选择跳过当前视频。".format(finishTime))
+
 			if key == ord("q"):
-				fpsTimer.stop()
-				finishTime = datetime.datetime.now()
-				print(Fore.RED + "\n\n\n[x] 用户于 {} 中断进程。".format(finishTime))
-				print(Style.RESET_ALL + "[i] {} 采集提前结束。".format(f))
+				print(Fore.RED + "\n    用户于 {} 中断进程。".format(finishTime))
 
-				if saveCounter != 0:
-					print("    总共采集：{} 张图像".format(saveCounter))
-					print("    保存位置：{}{}".format(save_path, auto_path))
-					print("    采集用时：{:.2f} 秒".format(fpsTimer.elapsed()))
-					print("    平均帧率：{:.2f} fps".format(fpsTimer.fps()))
+			print(Style.RESET_ALL + "    {} 的采集提前结束。".format(f))
 
-				print("\a")
-				break
+			if saveCounter != 0:
+				print("    总共采集：{} 张图像".format(saveCounter))
+				print("    保存位置：{}{}".format(save_path, auto_path))
+				print("    采集用时：{:.2f} 秒".format(fpsTimer.elapsed()))
+				print("    平均帧率：{:.2f} fps".format(fpsTimer.fps()))
+			else:
+				print("    本次没有采集到图像。")
+
+			print("\a")
+			break
 
 	# 停止进程
 	fvs.release()
+
+	# 如果用户按下 Q 键，则中断进程
+	if key == ord("q"):
+		break
 
 # 关闭所有打开的窗口
 cv2.destroyAllWindows()
