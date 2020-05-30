@@ -62,7 +62,6 @@ class __redirection__:
     def reset(self):
         sys.stdout=self.__console__
         
-
 if __name__=="__main__":
     # redirection
     r_obj=__redirection__()
@@ -89,7 +88,7 @@ class Logger(object):
     def flush(self):
         pass
 
-# 如果用户指定了保存日志文件，则保存之
+# 如果用户指定了保存日志文件，则在 log/ 目录下保存
 if conf["save_log"]:
 	try:
 		os.mkdir("log/")
