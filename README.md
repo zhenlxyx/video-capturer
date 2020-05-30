@@ -26,3 +26,5 @@
 4. 安装 colorama 终端彩色文字输出
 
    打开命令提示符或 PowerShell，输入 pip install colorama 并回车，等待安装完成。
+
+为防止因权限不足，无法进行文件或文件夹而中断采集，建议以管理员身份运行命令提示符或 PowerShell。

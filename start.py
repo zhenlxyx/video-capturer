@@ -43,6 +43,11 @@ fileList = [f for f in listdir(conf["input_folder"]) if isfile(join(conf["input_
 startTime = datetime.datetime.now()
 logFileName = time.strftime("%H:%M:%S").replace(':', '_')
 
+# 确保 pythonw 静默模式可以在 Windows 上运行
+if sys.executable.endswith("pythonw.exe"):
+	sys.stdout = open(os.devnull, "w")
+	sys.stderr = open(os.path.join(os.getenv("TEMP"), "stderr-"+os.path.basename(sys.argv[0])), "w")
+
 # 同时在终端显示结果，并保存到日志文件
 class __redirection__:
     
