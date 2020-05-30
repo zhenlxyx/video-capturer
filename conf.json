@@ -1,13 +1,15 @@
 {
 	"show_video": true,
-	"show_detail": false, 
+	"show_detail": false,
 	"input_folder": "input/",
 	"output_folder": "output/",
 	"read_frames": 5,
-	"capture_type": "avg", 
+	"capture_type": "avg",
 	"capture_images": ["all", 2, 0],
 	"save_annotations": false,
-	"save_log": true, 
+	"save_log": true,
+	"save_csv": true,
+	"min_motion_frames": 1,
 	"delta_thresh": 5,
 	"min_area": 1500
 }
