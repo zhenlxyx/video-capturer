@@ -7,7 +7,6 @@
 # 导入必要的包
 import argparse								  # 支持命令行参数
 import warnings								  # 支持系统警告信息操作
-import io									  # 支持输入输出选项
 import sys									  # 支持日志等系统操作
 import datetime								  # 支持时间戳
 import imutils								  # OpenCV 和 Python 进行图像操作的简便函数集
@@ -19,6 +18,7 @@ from os import listdir						  # 支持文件列表
 from os.path import isfile, join			  # 支持文件操作
 from pyimagesearch.tempimage import TempImage # 支持保存临时文件
 from imutils.video import FPS				  # 支持计算采集时的平均帧率
+from colorama import init, Fore, Back, Style  # 支持在终端输出彩色文字
 
 # 构造命令行参数解析器并解析参数
 ap = argparse.ArgumentParser()
@@ -28,6 +28,8 @@ args = vars(ap.parse_args())
 
 # 过滤警告并加载配置
 warnings.filterwarnings("ignore")
+
+init(convert=True)
 
 if args.get("conf", None) is None:
 	conf = json.load(open("conf.json"))
@@ -93,7 +95,7 @@ if conf["save_log"]:
 		os.mkdir("log/")
 	except FileExistsError:
 		pass
-	
+
 	sys.stdout = Logger("log/{}.log".format(logFileName))
 
 # 显示欢迎信息
@@ -153,10 +155,9 @@ for n in range(len(fileList)):
 			pass
 		else:
 			fvs.release()
-			print("\n\n[x] 图像采集已中止，因为 capture_type 参数无效。")
-			print("    采集算法：avg（多帧加权平均法），two（二帧差分法），three（三帧差分法）。")
-			
-			print("\a")
+			print(Fore.RED + "\n\n[x] 图像采集已中止，因为 capture_type 参数无效。")
+			print(Fore.RED + "    采集算法：avg（多帧加权平均法），two（二帧差分法），three（三帧差分法）。")
+			print(Style.RESET_ALL + "\a") 
 			break
 
 		# 如果用户指定了无效的采集方式，则中止图像采集
@@ -164,11 +165,10 @@ for n in range(len(fileList)):
 			pass
 		else:
 			fvs.release()
-			print("\n\n[x] 图像采集已中止，因为 capture_images 参数无效。")
-			print("    参数格式：['采集方式', 采集数值 1, 采集数值 2]。")
-			print("    采集方式：all（应采尽采），frame（按帧采集），second（按秒采集）。")
-			
-			print("\a")
+			print(Fore.RED + "\n\n[x] 图像采集已中止，因为 capture_images 参数无效。")
+			print(Fore.RED + "    参数格式：['采集方式', 采集数值 1, 采集数值 2]。")
+			print(Fore.RED + "    采集方式：all（应采尽采），frame（按帧采集），second（按秒采集）。")
+			print(Style.RESET_ALL + "\a") 
 			break
 
 		# 如果无法抓取帧，则视频已播完
@@ -186,13 +186,13 @@ for n in range(len(fileList)):
 				print("    本次没有采集到图像。")
 
 			if n == len(fileList):
-				print("\n[v] 图像采集已全部完成。")
+				print(Fore.GREEN + "\n[v] 图像采集已全部完成。")
 				
 				# 进程结束时间
 				finishTime = datetime.datetime.now()
 				timePassed = finishTime - startTime
-				print("    本次采集完成于 {}，共耗时 {}。".format(finishTime, timePassed))
-				print("\a")
+				print(Fore.GREEN + "    本次采集完成于 {}，共耗时 {}。".format(finishTime, timePassed))
+				print(Style.RESET_ALL + "\a") 
 
 			break
 
@@ -207,7 +207,7 @@ for n in range(len(fileList)):
 
 			# 如果平均帧为 None，则将其初始化
 			if avg is None:
-				print("\n[i] 正在采集图像...")
+				print("[i] 正在采集图像...")
 				avg = gray.copy().astype("float")
 				continue
 
@@ -395,8 +395,9 @@ for n in range(len(fileList)):
 			# 如果用户按下 Q 键，则中断进程
 			if key == ord("q"):
 				fpsTimer.stop()
-				print("\n\n[x] 用户中断进程。")
-				print("    {} 采集提前结束。".format(f))
+				finishTime = datetime.datetime.now()
+				print(Fore.RED + "\n\n\n[x] 用户于 {} 中断进程。".format(finishTime))
+				print(Style.RESET_ALL + "[i] {} 采集提前结束。".format(f))
 
 				if saveCounter != 0:
 					print("    总共采集：{} 张图像".format(saveCounter))
