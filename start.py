@@ -1,8 +1,8 @@
 # 用法
 # 正常启动，加载 conf.json 配置文件 python start.py
 # 静默启动，加载 conf.json 配置文件 pythonw start.py
-# 正常启动，加载用户自定义的配置文件 python start.py --conf conf_2.json
-# 静默启动，加载用户自定义的配置文件 pythonw start.py --conf conf_2.json
+# 正常启动，加载用户自定义的配置文件 python start.py --c conf_2.json
+# 静默启动，加载用户自定义的配置文件 pythonw start.py --c conf_2.json
 
 # 导入必要的包
 import argparse								  # 支持命令行参数
@@ -46,18 +46,16 @@ logFileName = time.strftime("%H:%M:%S.").replace(':', '_').replace('.', '_')
 class __redirection__:
     
     def __init__(self):
-        self.buflist =[]
         self.__console__=sys.stdout
         
     def write(self, output_stream):
-        self.buflist.append(out_stream)
+        pass
         
     def to_console(self):
         sys.stdout=self.__console__
-        print(self.buflist)
     
     def flush(self):
-        self.buflist=[]
+        pass
         
     def reset(self):
         sys.stdout=self.__console__
@@ -408,7 +406,7 @@ for n in range(len(fileList)):
 				print(Fore.RED + "\n    用户于 {} 选择跳过当前视频。".format(finishTime))
 
 			if key == ord("q"):
-				print(Fore.RED + "\n    用户于 {} 中断进程。".format(finishTime))
+				print(Fore.RED + "\n    用户于 {} 选择中断本次采集。".format(finishTime))
 
 			print(Style.RESET_ALL + "    {} 的采集提前结束。".format(f))
 
