@@ -5,6 +5,26 @@
 
 ver 200531.2325
 
+已知问题：
+
+* 在 Windows 上，部分 H264 编码的视频在采集过程中遇到终端报错，但不影响采集。
+
+  错误信息：
+
+  ```
+  [NULL @ 00000230ac4d4a00] non-existing PPS 0 referenced
+  ```
+
+  变通办法：
+
+  * 转换视频格式
+
+  * 使用静默采集模式：
+
+    ```
+    pythonw start.py
+    ```
+
 ## 系统支持
 
 * Windows, macOS, Linux
