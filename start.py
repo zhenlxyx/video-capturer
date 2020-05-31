@@ -147,7 +147,7 @@ for n in range(len(fileList)):
 	with open(savePath + autoPath + 'vinfo.csv', 'w', newline='') as fOutput:
 		csvOutput = csv.writer(
 			fOutput, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-		csvOutput.writerow(["Frame", "Timecode", "Motion", "Contours"])
+		csvOutput.writerow(["Frame", "Timecode", "All Contours", "min_area Contours"])
 
 		# 从视频文件中读取
 		print("\n[i] 正在采集 ({}/{})：{}...".format(n + 1, len(fileList), f))
@@ -313,11 +313,13 @@ for n in range(len(fileList)):
 			cnts = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL,
 				cv2.CHAIN_APPROX_SIMPLE)
 			cnts = imutils.grab_contours(cnts)
+			cntsValid = 0
 
 			# 遍历轮廓
 			for c in cnts:
 				# 如果轮廓太小，则忽略它
 				if cv2.contourArea(c) < conf["min_area"]:
+					cntsValid -= 1
 					continue
 
 				# 计算轮廓的边界框，将其绘制在帧上，并更新文本
@@ -440,8 +442,8 @@ for n in range(len(fileList)):
 				break
 
 			# 写入 CSV 文件
-			motionDetector = lambda x: 0 if text == "" else 1
-			csvOutput.writerow([readFrameCounter, ts, motionDetector(text), len(cnts)])
+			# motionDetector = lambda x: 0 if text == "" else 1
+			csvOutput.writerow([readFrameCounter, ts, len(cnts), len(cnts) + cntsValid])
 
 		# 停止进程
 		fvs.release()
