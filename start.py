@@ -442,7 +442,6 @@ for n in range(len(fileList)):
 				break
 
 			# 写入 CSV 文件
-			# motionDetector = lambda x: 0 if text == "" else 1
 			csvOutput.writerow([readFrameCounter, ts, len(cnts), len(cnts) + cntsValid])
 
 		# 停止进程
