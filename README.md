@@ -15,19 +15,23 @@
 
    打开 Microsoft Store 应用，搜索“Python”并下载 Python 3.7 / 3.8。
 
-2. 安装 OpenCV
+2. 安装依赖包
+
+   在 video-capturer 目录下，以管理员身份打开命令提示符或 PowerShell，输入 python install.py
+
+3. 安装 OpenCV
 
    打开命令提示符或 PowerShell，输入 pip install opencv-python 并回车，等待安装完成。
 
-3. 安装 imutils
+4. 安装 imutils
 
    打开命令提示符或 PowerShell，输入 pip install imutils 并回车，等待安装完成。
 
-4. 安装 matplotlib
+5. 安装 matplotlib
 
    打开命令提示符或 PowerShell，输入 pip install matplotlib 并回车，等待安装完成。
-   
-5. 安装 colorama
+
+6. 安装 colorama
 
    打开命令提示符或 PowerShell，输入 pip install colorama 并回车，等待安装完成。
 
@@ -36,3 +40,5 @@
 pythonw
 
 类似的视频（例如从同一个摄像头）可以批处理。如果另一些视频差异太大，可能需要修改 JSON 配置以调整采集精度。
+
+采集时，对三个窗口进行拖拽会使采集暂停，直至鼠标松开。

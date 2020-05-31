@@ -1,4 +1,4 @@
- # -*- coding: UTF-8 -*-
+# -*- coding: UTF-8 -*-
 # 用法
 # 正常启动，加载 conf.json 配置文件 python start.py
 # 静默启动，加载 conf.json 配置文件 pythonw start.py
