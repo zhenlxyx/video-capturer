@@ -18,40 +18,52 @@ print("""
  \___/ |_| \__,_| \___| \___/   \____/ \__,_|| .__/  \__| \__,_||_|    \___||_|   
                                              | |                                  
 *******************************************  |_|  ********************************
+
+
+[i] 这个程序将安装下列 video-capturer 依赖包到你的电脑上：
+        opencv-python
+        imutils
+        matplotlib
+        colorama
+    部分依赖包可能需要管理员权限，已安装的依赖包将被更新或覆盖。
 """)
-print("")
 
 # 设置循环
 i = 0
 
 while i == 0:
     # 询问用户是否开始安装
-    answer = input("[i] 现在开始安装 video-capturer 依赖包？[y/n]").lower()
+    answer = input("    现在开始安装 video-capturer 依赖包？[y/n]").lower()
 
     if answer == "y":
-        print("")
+        print("\n\n[i] 安装已开始。\n")
 
         # 首先安装或更新 pip
+        print("\n[i] 正在设置 pip 包安装工具...\n")
         os.system("python -m pip install --upgrade pip -i https://pypi.tuna.tsinghua.edu.cn/simple")
 
         # 要安装的依赖包
         libs = ["opencv-python", "imutils", "matplotlib", "colorama"]
+        counter = 0
 
         for lib in libs:
+            counter += 1
+            print("\n[i] 正在安装 ({}/{})：{}...\n".format(counter, len(libs), libs[counter - 1]))
             os.system("pip install --upgrade -i https://pypi.tuna.tsinghua.edu.cn/simple "+ lib)
 
-        print("\n[v] 安装完成。")
-        print("    如果有部分依赖包未安装成功，可以重新运行本程序。")
-        print("    现在可以开始使用 video-capturer 了。")
+        print("\n\n[v] 安装完成。现在可以开始使用 video-capturer 了。")
+        print("    如果有部分依赖包未安装成功，可以重新运行本程序，或使用")
+        print("        pip install 安装包名称")
+        print("    命令来安装它。")
         print("\a")
         i = 1
 
     elif answer == "n":
-        print("[x] 您已取消安装 video-capturer 依赖包。")
+        print("\n\n[x] 您已取消安装 video-capturer 依赖包。")
         print("\a")
         i = 1
 
     else:
+        print("    请输入 y 继续，或输入 n 取消。")
         print("\a")
-        print("[x] 请输入 y 继续，或输入 n 取消。")
         i = 0
