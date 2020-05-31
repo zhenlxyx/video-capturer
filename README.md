@@ -19,11 +19,15 @@
 
    打开命令提示符或 PowerShell，输入 pip install opencv-python 并回车，等待安装完成。
 
-3. 安装 imutils 图像操作简便函数集
+3. 安装 imutils
 
    打开命令提示符或 PowerShell，输入 pip install imutils 并回车，等待安装完成。
 
-4. 安装 colorama 终端彩色文字输出
+4. 安装 matplotlib
+
+   打开命令提示符或 PowerShell，输入 pip install matplotlib 并回车，等待安装完成。
+   
+5. 安装 colorama
 
    打开命令提示符或 PowerShell，输入 pip install colorama 并回车，等待安装完成。
 

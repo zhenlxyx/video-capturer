@@ -1,3 +1,4 @@
+ # -*- coding: UTF-8 -*-
 # 用法
 # 正常启动，加载 conf.json 配置文件 python start.py
 # 静默启动，加载 conf.json 配置文件 pythonw start.py
@@ -5,21 +6,22 @@
 # 静默启动，加载用户自定义的配置文件 pythonw start.py --c conf_2.json
 
 # 导入必要的包
-import argparse								  # 支持命令行参数
-import warnings								  # 支持系统警告信息操作
-import sys									  # 支持日志等系统操作
-import datetime								  # 支持时间戳
-import imutils								  # OpenCV 和 Python 进行图像操作的简便函数集
-import json									  # 支持用户配置
-import time									  # 支持时间操作
+import argparse								  # 命令行参数
+import warnings								  # 系统警告信息
+import sys									  # 将终端输出保存到日志
+import datetime								  # 时间戳
+import imutils								  # 图像操作简便函数集
+import json									  # 用户配置
+import time									  # 时间操作
 import cv2									  # OpenCV
-import os									  # 支持文件和文件夹操作
-import csv									  # 支持读取和保存 CSV 文件
-from os import listdir						  # 支持文件列表
-from os.path import isfile, join			  # 支持文件操作
-from pyimagesearch.tempimage import TempImage # 支持保存临时文件
-from imutils.video import FPS				  # 支持计算采集时的平均帧率
-from colorama import init, Fore, Back, Style  # 支持在终端输出彩色文字
+import os									  # 文件和文件夹操作
+import csv									  # 读取和保存 CSV 文件
+import matplotlib.pyplot as plt				  # 绘图并保存
+from os import listdir						  # 文件列表
+from os.path import isfile, join			  # 文件操作
+from pyimagesearch.tempimage import TempImage # 保存临时文件
+from imutils.video import FPS				  # 计算采集时的平均帧率
+from colorama import init, Fore, Back, Style  # 在终端输出彩色文字
 
 # 构造命令行参数解析器并解析参数
 ap = argparse.ArgumentParser()
@@ -125,9 +127,9 @@ for n in range(len(fileList)):
 
 	# 创建采集图片保存目录
 	if args.get("conf", None) is None:
-		autoPath = f.split(".")[0] + "__conf/"
+		autoPath = f.replace(".", "_") + "__conf/"
 	else:
-		autoPath = f.split(".")[0] + "__" + args["conf"].split(".")[0] + "/"
+		autoPath = f.replace(".", "_") + "__" + args["conf"].split(".")[0] + "/"
 
 	# 如果用户未指定保存目录，将图像直接保存在当前目录下、以视频 + 设置名称命名的子文件夹中
 	if savePath == "":
@@ -144,10 +146,10 @@ for n in range(len(fileList)):
 			pass
 
 	# 开始将当前视频信息写入 CSV 文件
-	with open(savePath + autoPath + 'vinfo.csv', 'w', newline='') as fOutput:
+	with open(savePath + autoPath + 'vinfo.csv', 'w', newline='', encoding='utf-8') as fOutput:
 		csvOutput = csv.writer(
 			fOutput, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-		csvOutput.writerow(["Frame", "Timecode", "All Contours", "min_area Contours"])
+		csvOutput.writerow(["帧", "时间码", "全部轮廓", "min_area 轮廓"])
 
 		# 从视频文件中读取
 		print("\n[i] 正在采集 ({}/{})：{}...".format(n + 1, len(fileList), f))
@@ -411,7 +413,7 @@ for n in range(len(fileList)):
 			# 检查用户是否设置在屏幕上显示视频画面
 			if conf["show_video"]:
 				# 在三个窗口中显示视频回放、阈值和帧增量
-				cv2.imshow("Video Playback", frame)
+				cv2.imshow("Video", frame)
 				cv2.imshow("Thresh", thresh)
 				cv2.imshow("Frame Delta", frameDelta)
 				key = cv2.waitKey(1) & 0xFF
@@ -450,6 +452,45 @@ for n in range(len(fileList)):
 		# 如果用户按下 Q 键，则中断进程
 		if key == ord("q"):
 			break
+
+	# 绘制视频信息图
+	x1 = []
+	x2 = []
+	y1 = []
+	y2 = []
+
+	plt.rcParams['font.sans-serif']=['Microsoft YaHei'] # 用来正常显示中文
+
+	with open(savePath + autoPath + 'vinfo.csv', 'r', encoding='utf-8') as csvfile:
+		plots = csv.reader(csvfile, delimiter=',')
+
+		for row in plots:
+			x1.append(row[0])
+			x2.append(row[1])
+			y1.append(row[2])
+			y2.append(row[3])
+
+	x1n = x1[1:]
+	x2n = x2[1:]
+	y1n = y1[1:]
+	y2n = y2[1:]
+	y1n = [int(x) for x in y1n]
+	y2n = [int(x) for x in y2n]
+
+	plt.subplot(111)
+	plt.figure(figsize=(15, 7))
+	plt.bar(x1n,y1n,alpha=0.5)
+	plt.bar(x1n,y2n)
+
+	plt.title(u'视频信息: {}'.format(f))
+	plt.legend([y1[0], y2[0]])
+	plt.grid(axis="y")
+	plt.xlabel(u'时间码', labelpad=20)
+	plt.ylabel(u'计数')
+	plt.xticks(range(0, len(x1n), int(len(x1n)/20)), x2n[0:len(x2n):int(len(x2n)/20)], rotation=-45, ha="left", rotation_mode="anchor")
+
+	plt.subplots_adjust(bottom=0.25)
+	plt.savefig(savePath + autoPath + 'vinfo.png')
 
 # 关闭所有打开的窗口
 cv2.destroyAllWindows()
