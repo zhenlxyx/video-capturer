@@ -9,6 +9,6 @@
 	"save_annotations": false,
 	"save_log": true,
 	"min_motion_frames": 1,
-	"delta_thresh": 5,
+	"min_delta_thresh": 5,
 	"min_area": 1500
 }

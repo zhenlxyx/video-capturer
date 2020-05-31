@@ -1,4 +1,6 @@
 # -*- coding: UTF-8 -*-
+# Xiangzhen Lu
+# ver 200531.2325
 # 用法
 # 正常启动，加载 conf.json 配置文件 python start.py
 # 静默启动，加载 conf.json 配置文件 pythonw start.py
@@ -254,7 +256,7 @@ for n in range(len(fileList)):
 				frameDelta = cv2.absdiff(gray, cv2.convertScaleAbs(avg))
 
 				# 对增量图像进行阈值处理，对阈值图像进行扩张以填充孔洞
-				thresh = cv2.threshold(frameDelta, conf["delta_thresh"], 255,
+				thresh = cv2.threshold(frameDelta, conf["min_delta_thresh"], 255,
 					cv2.THRESH_BINARY)[1]
 				thresh = cv2.dilate(thresh, None, iterations=2)
 
@@ -276,7 +278,7 @@ for n in range(len(fileList)):
 				thresh = cv2.cvtColor(frameDelta, cv2.COLOR_BGR2GRAY) 
 			
 				# 图像二值化 
-				thresh = cv2.threshold(thresh, conf["delta_thresh"], 255, cv2.THRESH_BINARY)[1] 
+				thresh = cv2.threshold(thresh, conf["min_delta_thresh"], 255, cv2.THRESH_BINARY)[1] 
 			
 			# 如果用户指定的图像采集算法为三帧差分法
 			elif conf["capture_type"] == "three":
@@ -305,7 +307,7 @@ for n in range(len(fileList)):
 				thresh = cv2.cvtColor(thresh, cv2.COLOR_BGR2GRAY)
 
 				# 图像二值化
-				thresh = cv2.threshold(thresh, conf["delta_thresh"], 255, cv2.THRESH_BINARY)[1]
+				thresh = cv2.threshold(thresh, conf["min_delta_thresh"], 255, cv2.THRESH_BINARY)[1]
 
 				# 去除图像噪声，先腐蚀再膨胀（形态学开运算）
 				thresh = cv2.dilate(thresh, None, iterations=3)
