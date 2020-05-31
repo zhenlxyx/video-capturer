@@ -41,7 +41,7 @@ savePath = conf["output_folder"]
 fileList = [f for f in listdir(conf["input_folder"]) if isfile(join(conf["input_folder"], f)) and not f.startswith('.')]
 
 startTime = datetime.datetime.now()
-logFileName = time.strftime("%H:%M:%S").replace(':', '_')
+logFileName = time.strftime("%Y %m %d %H:%M:%S").replace(':', '_').replace(' ', '_')
 
 # 确保 pythonw 静默模式可以在 Windows 上运行
 if sys.executable.endswith("pythonw.exe"):
