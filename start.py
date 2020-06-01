@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 # Xiangzhen Lu
-# ver 200531.2325
+# ver 200601.1130
 # 用法
 # 正常启动，加载 conf.json 配置文件 python start.py
 # 静默启动，加载 conf.json 配置文件 pythonw start.py
@@ -151,7 +151,7 @@ for n in range(len(fileList)):
 	with open(savePath + autoPath + 'vinfo.csv', 'w', newline='', encoding='utf-8') as fOutput:
 		csvOutput = csv.writer(
 			fOutput, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-		csvOutput.writerow(["帧", "时间码", "全部轮廓", "min_area 轮廓"])
+		csvOutput.writerow(["帧", "时间码", "侦测到的全部运动", "按设定标准采集的运动"])
 
 		# 从视频文件中读取
 		print("\n[i] 正在采集 ({}/{})：{}...".format(n + 1, len(fileList), f))
@@ -221,7 +221,7 @@ for n in range(len(fileList)):
 				if saveCounter != 0:
 					print("    总共采集：{} 张图像".format(saveCounter))
 					print("    保存位置：{}{}".format(savePath, autoPath))
-					print("    采集用时：{:.2f} 秒".format(fpsTimer.elapsed()))
+					print("    采集用时：{}".format(datetime.timedelta(seconds = fpsTimer.elapsed())))
 					print("    平均帧率：{:.2f} fps\n".format(fpsTimer.fps()))
 				else:
 					print("    本次没有采集到图像。")
@@ -405,11 +405,17 @@ for n in range(len(fileList)):
 			else:
 				motionCounter = 0
 
-			# 在帧上绘制读取进度和运动侦测状态
+			# 在帧上绘制读取进度、当前视频的估计剩余时间和运动侦测状态
 			percent = cf / fc * 100.0
+			currentTime = datetime.datetime.now()
+			elapsedTime = currentTime - startTime
+			elapsedTime = elapsedTime.total_seconds()
+			remainingTime = (fc - cf) / (cf / elapsedTime)
 			cv2.putText(frame, "({}/{}) ".format(n + 1, len(fileList)) + str('%.1f'%percent)+"%", (frame.shape[1] - 105, 20), cv2.FONT_HERSHEY_SIMPLEX,
 				0.45, (0, 255, 0), 2)
-			cv2.putText(frame, "{}".format(text), (frame.shape[1] - 65, 40),
+			cv2.putText(frame, "Est. {}".format(datetime.timedelta(seconds = remainingTime)), (frame.shape[1] - 160, 40), cv2.FONT_HERSHEY_SIMPLEX,
+				0.45, (0, 255, 0), 2)
+			cv2.putText(frame, "{}".format(text), (frame.shape[1] - 65, 60),
 				cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
 
 			# 检查用户是否设置在屏幕上显示视频画面
@@ -437,7 +443,7 @@ for n in range(len(fileList)):
 				if saveCounter != 0:
 					print("    总共采集：{} 张图像".format(saveCounter))
 					print("    保存位置：{}{}".format(savePath, autoPath))
-					print("    采集用时：{:.2f} 秒".format(fpsTimer.elapsed()))
+					print("    采集用时：{}".format(datetime.timedelta(seconds = fpsTimer.elapsed())))
 					print("    平均帧率：{:.2f} fps".format(fpsTimer.fps()))
 				else:
 					print("    本次没有采集到图像。")
