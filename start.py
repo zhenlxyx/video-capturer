@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 # Xiangzhen Lu
-# ver 200601.1130
+# ver 200601.1350
 # 用法
 # 正常启动，加载 conf.json 配置文件 python start.py
 # 静默启动，加载 conf.json 配置文件 pythonw start.py
@@ -417,6 +417,7 @@ for n in range(len(fileList)):
 				0.45, (0, 255, 0), 2)
 			cv2.putText(frame, "{}".format(text), (frame.shape[1] - 65, 60),
 				cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+			fpsTimer.update()
 
 			# 检查用户是否设置在屏幕上显示视频画面
 			if conf["show_video"]:
@@ -424,10 +425,10 @@ for n in range(len(fileList)):
 				cv2.imshow("Video", frame)
 				cv2.imshow("Thresh", thresh)
 				cv2.imshow("Frame Delta", frameDelta)
-				key = cv2.waitKey(1) & 0xFF
-				fpsTimer.update()
 
 			# 如果用户按下 S 键，则跳过当前视频
+			key = cv2.waitKey(1) & 0xFF
+
 			if key == ord("s") or key == ord("q"):
 				fpsTimer.stop()
 				finishTime = datetime.datetime.now()
