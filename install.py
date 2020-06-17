@@ -41,7 +41,7 @@ while i == 0:
 
         # 首先安装或更新 pip
         print("\n[i] 正在设置 pip 包安装工具...\n")
-        os.system("python -m pip install --upgrade pip -i https://pypi.tuna.tsinghua.edu.cn/simple")
+        os.system("python3 -m pip install --upgrade pip -i https://pypi.tuna.tsinghua.edu.cn/simple")
 
         # 要安装的依赖包
         libs = ["opencv-python", "imutils", "matplotlib", "colorama"]
@@ -50,7 +50,7 @@ while i == 0:
         for lib in libs:
             counter += 1
             print("\n[i] 正在安装 ({}/{})：{}...\n".format(counter, len(libs), libs[counter - 1]))
-            os.system("pip install --upgrade -i https://pypi.tuna.tsinghua.edu.cn/simple "+ lib)
+            os.system("python3 -m pip install --upgrade -i https://pypi.tuna.tsinghua.edu.cn/simple "+ lib)
 
         print("\n\n[v] 安装完成。现在可以开始使用 video-capturer 了。")
         print("    如果有部分依赖包未安装成功，可以重新运行本程序，或使用")

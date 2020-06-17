@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 # Xiangzhen Lu
-# ver 200601.1350
+# ver 200617.1311
 # 用法
 # 正常启动，加载 conf.json 配置文件 python start.py
 # 静默启动，加载 conf.json 配置文件 pythonw start.py
@@ -37,12 +37,22 @@ warnings.filterwarnings("ignore")
 init(convert=True)
 
 if args.get("conf", None) is None:
-	conf = json.load(open("conf.json"))
+	jsonPath = "conf.json"
 else:
-	conf = json.load(open(args["conf"]))
+	jsonPath = args["conf"]
+
+with open(jsonPath, 'r', encoding='utf-8') as j:
+	conf = json.load(j)
+
+try:
+	if conf["input_type"] == "folder":
+		fileList = [f for f in listdir(conf["input_folder"]) if isfile(join(conf["input_folder"], f)) and not f.startswith('.')]
+	elif conf["input_type"] == "files":
+		fileList = [f for f in conf["input_files"]]
+except NameError:
+	pass
 
 savePath = conf["output_folder"]
-fileList = [f for f in listdir(conf["input_folder"]) if isfile(join(conf["input_folder"], f)) and not f.startswith('.')]
 
 startTime = datetime.datetime.now()
 logFileName = time.strftime("%Y %m %d %H:%M:%S").replace(':', '_').replace(' ', '_')
@@ -122,16 +132,29 @@ print("""
 # 进程开始时间
 print("\n[i] 本次采集开始于 {}。\n".format(startTime))
 
+# 如果用户指定了无效的采集来源，则中止图像采集
+if (conf["input_type"] == "folder") or (conf["input_type"] == "files"):
+	pass
+else:
+	print(Fore.RED + "\n\n[x] 图像采集已中止，因为 input_type 参数无效。")
+	print(Fore.RED + "    采集来源：folder（文件夹），files（视频文件列表）。")
+	print(Style.RESET_ALL + "\a") 
+	sys.exit(0)
+
 # 遍历所有视频文件
 for n in range(len(fileList)):
 	f = fileList[n]
-	file = conf["input_folder"] + f
+	
+	if conf["input_type"] == "folder":
+		file = conf["input_folder"] + f
+	elif conf["input_type"] == "files":
+		file = f
 
 	# 创建采集图片保存目录
 	if args.get("conf", None) is None:
-		autoPath = f.replace(".", "_") + "__conf/"
+		autoPath = f.replace("/", "_").replace(".", "_") + "__conf/"
 	else:
-		autoPath = f.replace(".", "_") + "__" + args["conf"].split(".")[0] + "/"
+		autoPath = f.replace("/", "_").replace(".", "_") + "__" + args["conf"].split(".")[0] + "/"
 
 	# 如果用户未指定保存目录，将图像直接保存在当前目录下、以视频 + 设置名称命名的子文件夹中
 	if savePath == "":
@@ -496,7 +519,11 @@ for n in range(len(fileList)):
 	plt.grid(axis="y")
 	plt.xlabel(u'时间码', labelpad=20)
 	plt.ylabel(u'计数')
-	plt.xticks(range(0, len(x1n), int(len(x1n)/20)), x2n[0:len(x2n):int(len(x2n)/20)], rotation=-45, ha="left", rotation_mode="anchor")
+
+	try:
+		plt.xticks(range(0, len(x1n), int(len(x1n)/20)), x2n[0:len(x2n):int(len(x2n)/20)], rotation=-45, ha="left", rotation_mode="anchor")
+	except ValueError:
+		break
 
 	plt.subplots_adjust(bottom=0.25)
 	plt.savefig(savePath + autoPath + 'vinfo.png')
