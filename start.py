@@ -163,9 +163,9 @@ while i == 0:
 
 			# 创建采集图片保存目录
 			if args.get("conf", None) is None:
-				autoPath = f.replace("/", "_").replace(".", "_") + "__conf/"
+				autoPath = f.replace("/", "_") + "__conf/"
 			else:
-				autoPath = f.replace("/", "_").replace(".", "_") + "__" + args["conf"].split(".")[0] + "/"
+				autoPath = f.replace("/", "_") + "__" + args["conf"].split(".")[0] + "/"
 
 			# 如果用户未指定保存目录，将图像直接保存在当前目录下、以视频 + 设置名称命名的子文件夹中
 			if savePath == "":
