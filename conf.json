@@ -1,18 +1,18 @@
 {
-	"show_video": true,
-	"show_detail": false,
-	"save_annotations": false,
-	"save_log": true,
-	"input_type": "folder",
-	"input_files": ["input/example_01.mp4", "input/example_02.mp4"], 
-	"input_folder": "input/",
-	"output_folder": "output/",
-	"read_frames": 5,
-	"capture_type": "avg",
-	"capture_images": ["all", 2, 0],
-	"min_motion_frames": 1,
-	"min_delta_thresh": 5,
-	"min_area": 1500,
-	"json_created": "2020-06-17 13:11",
-	"json_notes": "适用于我家客厅的摄像头"
+    "show_video": true,
+    "save_annotations": false,
+    "save_log": false,
+    "output_folder": "output/",
+    "read_frames": 5,
+    "capture_type": "avg",
+    "capture_images": [
+        "all",
+        2,
+        0
+    ],
+    "min_motion_frames": 1,
+    "min_delta_thresh": 5,
+    "min_area": 1500,
+    "json_created": "YYYY-MM-DD HH:MM",
+    "json_notes": "在此输入本设置文件的注释"
 }

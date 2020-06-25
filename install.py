@@ -1,7 +1,11 @@
 # -*- coding: UTF-8 -*-
 # Xiangzhen Lu
 # 用法
-# python install.py
+
+'''
+python install.py
+python3 install.py
+'''
 
 # 导入必要的包
 import os									  # 文件和文件夹操作
@@ -22,10 +26,11 @@ print("""
 
 
 [i] 这个程序将安装下列 video-capturer 依赖包到你的电脑上：
-        opencv-python
-        imutils
-        matplotlib
-        colorama
+     - opencv-python
+     - imutils
+     - matplotlib
+     - colorama
+     - keyboard（如果在 Windows 运行）
     部分依赖包可能需要管理员权限，已安装的依赖包将被更新或覆盖。
 """)
 
@@ -51,6 +56,10 @@ while i == 0:
             counter += 1
             print("\n[i] 正在安装 ({}/{})：{}...\n".format(counter, len(libs), libs[counter - 1]))
             os.system("python3 -m pip install --upgrade -i https://pypi.tuna.tsinghua.edu.cn/simple "+ lib)
+
+        if os.name == 'nt':
+            print("\n[i] 正在安装额外项：keyboard...\n")
+            os.system("python3 -m pip install --upgrade -i https://pypi.tuna.tsinghua.edu.cn/simple keyboard")
 
         print("\n\n[v] 安装完成。现在可以开始使用 video-capturer 了。")
         print("    如果有部分依赖包未安装成功，可以重新运行本程序，或使用")
