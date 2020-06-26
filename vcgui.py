@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 # Xiangzhen Lu
-# ver 200625.2340
+# ver 200626.2326
 
 # 用法
 
@@ -48,6 +48,7 @@ def start():
     inputFilesRBtn.configure(state="disabled")
     fileLb.configure(state="disabled")
     inputFilesBtn.configure(state="disabled")
+    inputFilesClearBtn.configure(state="disabled")
     openJsonRBtn.configure(state="disabled")
     openJsonEnt.configure(state="disabled")
     openJsonBtn.configure(state="disabled")
@@ -100,6 +101,7 @@ def capture():
     inputFilesRBtn.configure(state="normal")
     fileLb.configure(state="normal")
     inputFilesBtn.configure(state="normal")
+    inputFilesClearBtn.configure(state="normal")
     openJsonRBtn.configure(state="normal")
     openJsonEnt.configure(state="normal")
     openJsonBtn.configure(state="normal")
@@ -124,8 +126,7 @@ def addFolder():
     inputFolderVar.set(filePath+"/")
     inputVar.set("folder")
 
-    if (inputFolderEnt.get() != "" or len(fileLb.get("0", "end")) != 0) and openJsonEnt.get() != "":
-        startBtn.configure(state="normal")
+    normalizer()
 
 # 添加输出文件夹函数
 def addOutputFolder():
@@ -165,8 +166,40 @@ def addFiles():
 
     inputVar.set("files")
 
-    if (inputFolderEnt.get() != "" or len(fileLb.get("0", "end")) != 0) and openJsonEnt.get() != "":
+    normalizer()
+
+def selectAddFolder():
+    inputVar.set("folder")
+    if inputFolderEnt.get() != "" and jsonVar.get() == "open" and openJsonEnt.get() != "":
         startBtn.configure(state="normal")
+    else:
+        startBtn.configure(state="disabled")
+
+def selectAddFiles():
+    inputVar.set("files")
+    if len(fileLb.get("0", "end")) == 0:
+        startBtn.configure(state="disabled")
+    elif len(fileLb.get("0", "end")) != 0 and jsonVar.get() == "open" and openJsonEnt.get() != "":
+        startBtn.configure(state="normal")
+
+def selectOpenJson():
+    jsonVar.set("open")
+    if inputVar.get() == "folder" and inputFolderEnt.get() != "" and openJsonEnt.get() != "":
+        startBtn.configure(state="normal")
+    elif inputVar.get() == "files" and len(fileLb.get("0", "end")) != 0 and openJsonEnt.get() != "":
+        startBtn.configure(state="normal")
+
+def selectNewJson():
+    jsonVar.set("new")
+    startBtn.configure(state="disabled")
+
+def clearFiles():
+    fileLb.delete(0, "end")
+    fileLb2.delete(0, "end")
+    del fileList[:]
+    inputFilesVar.set("采集以下 {} 个视频：".format(fileCount))
+    inputVar.set("files")
+    startBtn.configure(state="disabled")
 
 # 打开设置文件函数
 def addJson():
@@ -489,8 +522,7 @@ def openJson(jsonPath):
 
         jsonVar.set("open")
 
-        if (inputFolderEnt.get() != "" or len(fileLb.get("0", "end")) != 0) and openJsonEnt.get() != "":
-            startBtn.configure(state="normal")
+        normalizer()
 
     except json.decoder.JSONDecodeError:
         jsonError()
@@ -566,6 +598,15 @@ def changeCaptureImagesPara1(*args):
         captureImagesPara2Frm_all.grid_forget()
         captureImagesPara2Frm_frame.grid_forget()
 
+# 决定各界面控件的启用和禁用的一般原则
+def normalizer():
+    if inputVar.get() == "folder" and inputFolderEnt.get() != "" and jsonVar.get() == "open" and openJsonEnt.get() != "":
+        startBtn.configure(state="normal")
+    elif inputVar.get() == "files" and len(fileLb.get("0", "end")) != 0 and jsonVar.get() == "open" and openJsonEnt.get() != "":
+        startBtn.configure(state="normal")
+    else:
+        startBtn.configure(state="disabled")
+
 # 参数文本框滚动事件函数
 def scrollEvent(event):
     paraCvs.configure(scrollregion=paraCvs.bbox("all"),width=400,height=200)
@@ -621,6 +662,7 @@ inputFolderRBtn.configure(justify='left')
 inputFolderRBtn.configure(text='''采集此文件夹下的全部视频：''')
 inputFolderRBtn.configure(value="folder")
 inputFolderRBtn.configure(variable=inputVar)
+inputFolderRBtn.configure(command=selectAddFolder)
 
 # 输入文件夹文本框
 inputFolderVar = tk.StringVar()
@@ -674,6 +716,7 @@ inputFilesRBtn.configure(justify='left')
 inputFilesRBtn.configure(value="files")
 inputFilesRBtn.configure(variable=inputVar)
 inputFilesRBtn.configure(textvariable=inputFilesVar)
+inputFilesRBtn.configure(command=selectAddFiles)
 
 # 输入文件列表框
 fileLb = Listbox(sourceLf)
@@ -692,6 +735,7 @@ scrollBar = Scrollbar(fileLb)
 scrollBar.pack(side="right", fill="y")
 scrollBar.config(command=fileLb.yview)
 fileLb.config(yscrollcommand=scrollBar.set)
+fileLb.delete(0, "end")
 
 fileLb2 = Listbox(sourceLf)
 fileLb2.configure(background="white")
@@ -703,6 +747,7 @@ fileLb2.configure(highlightbackground="#d9d9d9")
 fileLb2.configure(highlightcolor="#d9d9d9")
 fileLb2.configure(selectbackground="#c4c4c4")
 fileLb2.configure(selectforeground="black")
+fileLb2.delete(0, "end")
 
 # 输入文件选择按钮
 inputFilesBtn = tk.Button(sourceLf)
@@ -718,6 +763,21 @@ inputFilesBtn.configure(highlightcolor="black")
 inputFilesBtn.configure(pady="0")
 inputFilesBtn.configure(text='''选择''')
 inputFilesBtn.configure(command=addFiles)
+
+# 清除输入文件选择按钮
+inputFilesClearBtn = tk.Button(sourceLf)
+inputFilesClearBtn.place(relx=0.789, rely=0.48, height=28, width=65
+        , bordermode='ignore')
+inputFilesClearBtn.configure(activebackground="#ececec")
+inputFilesClearBtn.configure(activeforeground="#000000")
+inputFilesClearBtn.configure(background="#d9d9d9")
+inputFilesClearBtn.configure(disabledforeground="#a3a3a3")
+inputFilesClearBtn.configure(foreground="#000000")
+inputFilesClearBtn.configure(highlightbackground="#d9d9d9")
+inputFilesClearBtn.configure(highlightcolor="black")
+inputFilesClearBtn.configure(pady="0")
+inputFilesClearBtn.configure(text='''清空''')
+inputFilesClearBtn.configure(command=clearFiles)
 
 # 采集选项标签框架
 configLf = tk.LabelFrame(window)
@@ -751,6 +811,7 @@ openJsonRBtn.configure(justify='left')
 openJsonRBtn.configure(text='''加载现有设置文件：''')
 openJsonRBtn.configure(value="open")
 openJsonRBtn.configure(variable=jsonVar)
+openJsonRBtn.configure(command=selectOpenJson)
 
 # 打开设置文件文本框
 openJsonVar = tk.StringVar()
@@ -813,6 +874,7 @@ newJsonRBtn.configure(justify='left')
 newJsonRBtn.configure(text='''新建设置文件：''')
 newJsonRBtn.configure(value="new")
 newJsonRBtn.configure(variable=jsonVar)
+newJsonRBtn.configure(command=selectNewJson)
 
 # 新建设置文件文本框
 newJsonEnt = tk.Entry(configLf)

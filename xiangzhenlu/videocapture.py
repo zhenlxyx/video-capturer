@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 # Xiangzhen Lu
-# ver 200625.2340
+# ver 200626.2326
 
 # 导入必要的包
 import sys									  # 将终端输出保存到日志
