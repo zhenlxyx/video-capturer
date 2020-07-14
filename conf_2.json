@@ -1,14 +1,14 @@
 {
     "show_video": true,
-    "save_annotations": true,
     "save_log": false,
     "output_folder": "output/",
+    "annotation_type": "yolo",
     "read_frames": 5,
     "capture_type": "avg",
     "capture_images": [
         "all",
         2,
-        0
+        2
     ],
     "min_motion_frames": 1,
     "min_delta_thresh": 5,

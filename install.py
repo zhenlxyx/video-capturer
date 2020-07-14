@@ -3,7 +3,10 @@
 # 用法
 
 '''
+开始安装
 python install.py
+
+如果上述命令出现错误，请输入以下命令开始安装
 python3 install.py
 '''
 
@@ -23,14 +26,17 @@ print("""
  \___/ |_| \__,_| \___| \___/   \____/ \__,_|| .__/  \__| \__,_||_|    \___||_|   
                                              | |                                  
 *******************************************  |_|  ********************************
+（安装程序）
 
 
-[i] 这个程序将安装下列 video-capturer 依赖包到你的电脑上：
+[i] 本程序将安装下列 video-capturer 依赖包到你的电脑上：
      - opencv-python
      - imutils
+     - imagezmq
      - matplotlib
      - colorama
      - keyboard（如果在 Windows 运行）
+
     部分依赖包可能需要管理员权限，已安装的依赖包将被更新或覆盖。
 """)
 
@@ -44,22 +50,41 @@ while i == 0:
     if answer == "y":
         print("\n\n[i] 安装已开始。\n")
 
-        # 首先安装或更新 pip
-        print("\n[i] 正在设置 pip 包安装工具...\n")
-        os.system("python3 -m pip install --upgrade pip -i https://pypi.tuna.tsinghua.edu.cn/simple")
+        try:
+            # 首先安装或更新 pip
+            print("\n[i] 正在设置 pip 包安装工具...\n")
+            os.system("python3 -m pip install --upgrade pip -i https://pypi.tuna.tsinghua.edu.cn/simple")
 
-        # 要安装的依赖包
-        libs = ["opencv-python", "imutils", "matplotlib", "colorama"]
-        counter = 0
+            # 要安装的依赖包
+            libs = ["opencv-python", "imutils", "imagezmq", "matplotlib", "colorama"]
+            counter = 0
 
-        for lib in libs:
-            counter += 1
-            print("\n[i] 正在安装 ({}/{})：{}...\n".format(counter, len(libs), libs[counter - 1]))
-            os.system("python3 -m pip install --upgrade -i https://pypi.tuna.tsinghua.edu.cn/simple "+ lib)
+            for lib in libs:
+                counter += 1
+                print("\n[i] 正在安装 ({}/{})：{}...\n".format(counter, len(libs), libs[counter - 1]))
+                os.system("python3 -m pip install --upgrade -i https://pypi.tuna.tsinghua.edu.cn/simple "+ lib)
 
-        if os.name == 'nt':
-            print("\n[i] 正在安装额外项：keyboard...\n")
-            os.system("python3 -m pip install --upgrade -i https://pypi.tuna.tsinghua.edu.cn/simple keyboard")
+            if os.name == 'nt':
+                print("\n[i] 正在安装额外项：keyboard...\n")
+                os.system("python3 -m pip install --upgrade -i https://pypi.tuna.tsinghua.edu.cn/simple keyboard")
+
+        except:
+            # 首先安装或更新 pip
+            print("\n[i] 正在设置 pip 包安装工具...\n")
+            os.system("python -m pip install --upgrade pip -i https://pypi.tuna.tsinghua.edu.cn/simple")
+
+            # 要安装的依赖包
+            libs = ["opencv-python", "imutils", "imagezmq", "matplotlib", "colorama"]
+            counter = 0
+
+            for lib in libs:
+                counter += 1
+                print("\n[i] 正在安装 ({}/{})：{}...\n".format(counter, len(libs), libs[counter - 1]))
+                os.system("python -m pip install --upgrade -i https://pypi.tuna.tsinghua.edu.cn/simple "+ lib)
+
+            if os.name == 'nt':
+                print("\n[i] 正在安装额外项：keyboard...\n")
+                os.system("python -m pip install --upgrade -i https://pypi.tuna.tsinghua.edu.cn/simple keyboard")   
 
         print("\n\n[v] 安装完成。现在可以开始使用 video-capturer 了。")
         print("    如果有部分依赖包未安装成功，可以重新运行本程序，或使用")
