@@ -1135,7 +1135,7 @@ if currentHour >= 19 or currentHour <= 7:
     inputFilesRBtn.configure(background="#383838", activebackground="#606060", highlightbackground="#383838", foreground="#ffffff", activeforeground="#ffffff", selectcolor="#383838", anchor="w", font="-family {Microsoft YaHei} -size 11 -weight normal -slant roman -underline 0 -overstrike 0")
     fileLb.configure(background="#383838", foreground="#ffffff")
     inputFilesBtn.configure(background="#606060", activebackground="#909090", highlightbackground="#606060", foreground="#ffffff", activeforeground="#ffffff", borderwidth=0, relief="flat")
-    inputFilesClearBtn.configure(background="#606060", activebackground="#909090", foreground="#ffffff", activeforeground="#ffffff", borderwidth=0, relief="flat")
+    inputFilesClearBtn.configure(background="#606060", activebackground="#909090", highlightbackground="#606060", foreground="#ffffff", activeforeground="#ffffff", borderwidth=0, relief="flat")
     webcamRBtn.configure(background="#383838", activebackground="#606060", highlightbackground="#383838", foreground="#ffffff", activeforeground="#ffffff", selectcolor="#383838", anchor="w", font="-family {Microsoft YaHei} -size 11 -weight normal -slant roman -underline 0 -overstrike 0")
     networkRBtn.configure(background="#383838", activebackground="#606060", highlightbackground="#383838", foreground="#ffffff", activeforeground="#ffffff", selectcolor="#383838", anchor="w", font="-family {Microsoft YaHei} -size 11 -weight normal -slant roman -underline 0 -overstrike 0")
     networkMsg.configure(background="#383838", foreground="#ffffff")
