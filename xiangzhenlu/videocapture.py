@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 # Xiangzhen Lu
-# ver 200714.1200
+# ver 200715.1435
 
 # 导入必要的包
 import sys									  # 将终端输出保存到日志
@@ -423,7 +423,13 @@ def startCapture(fileList, jsonPath, showVideo, saveLog, inputType, inputFiles, 
 				elif inputType == "files":
 					mFile = m
 
-				frameCount = int(count_frames(mFile, override=False))
+				mVideo = cv2.VideoCapture(mFile)
+				frameCount = int(mVideo.get(cv2.CAP_PROP_FRAME_COUNT))
+				mVideo.release()
+
+				if frameCount == 0:
+					frameCount = int(count_frames(mFile, override=False))
+
 				totalFrameCount += frameCount
 
 		# 计算累计采集帧数和累计保存文件数
@@ -434,7 +440,13 @@ def startCapture(fileList, jsonPath, showVideo, saveLog, inputType, inputFiles, 
 				elif inputType == "files":
 					lastFile = fileList[n-1]
 				
-				lastFileFrameCount = int(count_frames(lastFile, override=False))
+				lVideo = cv2.VideoCapture(lastFile)
+				lastFileFrameCount = int(lVideo.get(cv2.CAP_PROP_FRAME_COUNT))
+				lVideo.release()
+
+				if lastFileFrameCount == 0:
+					lastFileFrameCount = int(count_frames(lastFile, override=False))
+
 				cumulatedFrameCount += lastFileFrameCount
 
 				lastFileAutoPath = lastFile.split("/")[-1].replace(":", "_").replace(" ", "_") + "__" + jsonPath.split("/")[-1].split(".")[0].replace(":", "_").replace(" ", "_") + "/"
