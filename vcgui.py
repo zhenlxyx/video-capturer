@@ -271,7 +271,7 @@ def newJson():
         "annotation_type": "pascalvoc",
         "read_frames": 5,
         "capture_type": "avg",
-        "capture_images": ["all", 2, 0],
+        "capture_images": ["all", 2, 2],
         "min_motion_frames": 1,
         "min_delta_thresh": 5,
         "min_area": 1500,
