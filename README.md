@@ -66,8 +66,7 @@ video-capturer 的默认结构如下：
 | - conf.json       | 图像采集的设置文件示例（默认）               | v      |        |
 | - conf_2.json     | 图像采集的设置文件示例                       | v      | v      |
 | - install.py      | 软件安装程序，在服务器或网络视频流设备上使用 |        |        |
-| - README.html     | 软件说明文档（HTML 版本）                    |        |        |
-| - README.md       | 软件说明文档（MD 版本）                      |        |        |
+| - README.md       | 软件说明文档                                 |        |        |
 | - vccmd.py        | 软件主程序 / 服务器端（CMD 版本）            |        |        |
 | - vcgui.py        | 软件主程序 / 服务器端（GUI 版本）            |        |        |
 
