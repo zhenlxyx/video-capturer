@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 # Xiangzhen Lu
-# ver 200715.1435
+# ver 201013.2100
 
 # 导入必要的包
 import sys									  # 将终端输出保存到日志
@@ -26,8 +26,9 @@ from xiangzhenlu.biframemotiondetector import BiFrameMotionDetector
 											  # 二帧差分法侦测器
 from xiangzhenlu.triframemotiondetector import TriFrameMotionDetector
 											  # 三帧差分法侦测器
+from xiangzhenlu.videostream import *		  # 串流网络视频流
 from imagezmq import imagezmq				  # 网络视频流设置
-from imutils import build_montages			  # 网络视频流作为输入源
+from imutils import build_montages			  # 网络视频流分屏显示
 from imutils.video import VideoStream		  # 摄像头作为输入源
 from imutils.video import count_frames	      # 计算帧数
 from imutils.video import FPS				  # 计算采集时的平均帧率
@@ -64,17 +65,17 @@ def startCapture(fileList, jsonPath, showVideo, saveLog, inputType, inputFiles, 
 			sys.stdout=self.__console__
 			
 	if __name__=="__main__":
-		# redirection
+		# 重定向
 		r_obj=__redirection__()
 		sys.stdout=r_obj
 		
-		# redirect to console
+		# 重定向到控制台
 		r_obj.to_console()
 		
-		# flush buffer
+		# 刷新缓冲区
 		r_obj.flush()
 		
-		# reset
+		# 重置
 		r_obj.reset()
 
 	class Logger(object):
@@ -99,21 +100,35 @@ def startCapture(fileList, jsonPath, showVideo, saveLog, inputType, inputFiles, 
 
 	# 停止采集函数
 	def stopCapture():
+		finishTime1 = datetime.datetime.now()
+
+		if inputType == "network":
+			print(Fore.RED + "\n    用户于 {} 选择中断本次采集。".format(finishTime1))
+			print("\a")
+			stopStream()
+			window.destroy()
+			cv2.destroyAllWindows()
+			window.after(100, stopCapture)
+			raise Exception
+			sys.exit(0)
+
 		try:
 			fpsTimer.stop()
-			finishTime1 = datetime.datetime.now()
-
 			print(Fore.RED + "\n    用户于 {} 选择中断本次采集。".format(finishTime1))
 
 			if inputType == "folder" or inputType == "files":
 				print(Style.RESET_ALL + "    {} 的采集提前结束。".format(f))
+				print("\a")
 				fvs.release()
-			elif inputType == "webcam" or inputType == "network":
-				window.destroy()
+			elif inputType == "webcam":
+				print("\a")
 				cv2.destroyAllWindows()
 				raise Exception
+
+			window.destroy()
 			cv2.destroyAllWindows()
 			window.after(100, stopCapture)
+
 		except:
 			sys.exit(0)
 
@@ -124,15 +139,19 @@ def startCapture(fileList, jsonPath, showVideo, saveLog, inputType, inputFiles, 
 			try:
 				fpsTimer.stop()
 				finishTime2 = datetime.datetime.now()
+
 				print(Fore.RED + "\n    用户于 {} 选择跳过当前视频。".format(finishTime2))
 
 				if inputType == "folder" or inputType == "files":
 					print(Style.RESET_ALL + "    {} 的采集提前结束。".format(f))
 					fvs.release()
+
 				elif inputType == "webcam":
 					fvs.stop()
+
 				cv2.destroyAllWindows()
 				return
+
 			except _tkinter.TclError:
 				pass
 
@@ -144,7 +163,7 @@ def startCapture(fileList, jsonPath, showVideo, saveLog, inputType, inputFiles, 
 			messagebox.showerror(title='摄像头错误', message='无法从摄像头获取视频。\n请检查摄像头设置是否正确。\n\n图像采集已中止。')
 
 		def networkError():
-			messagebox.showerror(title='网络视频流错误', message='无法从网络视频流设备获取视频。\n请检查网络视频流设备的设置是否正确。\n\n图像采集已中止。')
+			messagebox.showerror(title='网络视频流错误', message='无法获取网络视频流。\n请检查网络连接是否正常。\n\n图像采集已中止。')
 
 		# 用户界面
 		window = tk.Tk()
@@ -222,7 +241,7 @@ def startCapture(fileList, jsonPath, showVideo, saveLog, inputType, inputFiles, 
 			fpsCountLbl.place(relx=0.688, rely=0.48, height=21, width=228)
 		elif inputType == "network":
 			fpsLbl.place(relx=0.513, rely=0.48, height=21, width=136)
-			fpsLbl.configure(text='''已连接设备：''')
+			fpsLbl.configure(text='''已连接的流：''')
 			fpsCountLbl.place(relx=0.688, rely=0.48, height=21, width=228)
 
 		imgLbl = tk.Label(window)
@@ -351,10 +370,10 @@ def startCapture(fileList, jsonPath, showVideo, saveLog, inputType, inputFiles, 
 
 	if inputType == "network":
 		print("\n[i] 本次采集开始于 {}。".format(startTime))
-		print("    正在等待网络视频流设备传入连接...\n")
+		print("    正在连接网络视频流...\n")
 		
 		if gui: 
-			statusLbl.configure(text="正在等待网络视频流设备传入连接...")
+			statusLbl.configure(text="正在连接网络视频流...")
 			statusLbl.update()
 			stopBtn.configure(state="disabled")
 
@@ -503,19 +522,19 @@ def startCapture(fileList, jsonPath, showVideo, saveLog, inputType, inputFiles, 
 			# 为网络视频流初始化帧记录
 			frameDict = {}
 
-			# 初始化包含网络视频流设备上次处于活动状态的时间信息的记录，并存储上次进行检查的时间
+			# 初始化包含网络视频流上次处于活动状态的时间信息的记录，并存储上次进行检查的时间
 			lastActive = {}
 			lastActiveCheck = datetime.datetime.now()
 			lastActiveStreams = {}
 			lastActiveMotion = {}
 
-			# 存储估计网络视频流设备（例如 Raspberry Pi）的数量、活动检查周期，并计算在检查设备是否处于活动状态之前等待的持续时间秒数
+			# 存储估计网络视频流的数量、活动检查周期，并计算在检查视频流是否处于活动状态之前等待的持续时间秒数
 			ESTIMATED_NUM_PIS = 4
 			ACTIVE_CHECK_PERIOD = 5
 			ACTIVE_CHECK_SECONDS = ESTIMATED_NUM_PIS * ACTIVE_CHECK_PERIOD
 
 			# 分配每个网络视频流分屏的宽度和高度，以便我们可以在单个“仪表板”中查看所有传入帧
-			mW = 2
+			mW = 3
 			mH = 2
 
 			if captureType == "avg":
@@ -548,7 +567,7 @@ def startCapture(fileList, jsonPath, showVideo, saveLog, inputType, inputFiles, 
 					frame = frame
 
 				elif inputType == "network":
-					# 从网络视频流设备接收设备名称和帧，并向设备确认已接收
+					# 从网络视频流接收帧，并确认已接收
 					readFrameCounter += 1
 					fvs = imageHub.recv_image()
 					rpiName = fvs[0]
@@ -560,17 +579,17 @@ def startCapture(fileList, jsonPath, showVideo, saveLog, inputType, inputFiles, 
 					except FileExistsError:
 						pass
 
-					# 如果设备不在上一个活动记录中，则意味着它是新连接的设备
+					# 如果视频流不在上一个活动记录中，则意味着它是新连接的视频流
 					if rpiName not in lastActive.keys():
-						print("\n[i] 已连接到设备 {}。".format(rpiName))
-						print("    正在读取网络视频流...\n")
+						print(Fore.GREEN + "\n[v] 已连接到 {}。".format(rpiName))
+						print(Style.RESET_ALL + "    正在读取网络视频流...\n")
 
 						if gui:
 							statusLbl.configure(text="正在读取网络视频流...")
 							statusLbl.update()
 							stopBtn.configure(state="normal")
 							
-					# 记录活动的设备的最近活跃时间
+					# 记录活动视频流的最近活跃时间
 					lastActive[rpiName] = datetime.datetime.now()
 					lastActiveStreams[rpiName] = streams
 					lastActiveMotion[rpiName] = motions
@@ -676,7 +695,7 @@ def startCapture(fileList, jsonPath, showVideo, saveLog, inputType, inputFiles, 
 							print("     - 采集用时：{}".format(datetime.timedelta(seconds = fpsTimer.elapsed())))
 							print("     - 平均帧率：{:.2f} fps\n".format(fpsTimer.fps()))
 						else:
-							print("    本次没有采集到图像。")
+							print(Style.RESET_ALL + "    本次没有采集到图像。")
 
 						if n == len(fileList):
 							if gui:
@@ -766,7 +785,6 @@ def startCapture(fileList, jsonPath, showVideo, saveLog, inputType, inputFiles, 
 							n4 = (maxY - minY) * yratio
 
 				else:
-					# print((frame, motion))
 					frameOriginal = frame.copy()
 					frame = imutils.resize(frame, width=fw)
 					gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
@@ -814,19 +832,23 @@ def startCapture(fileList, jsonPath, showVideo, saveLog, inputType, inputFiles, 
 						0.45, (0, 0, 255), 1)
 
 				elif inputType == "webcam":
-					ts = currentTime.strftime("%H:%M:%S.%f")[:-3]
+					# 在帧上绘制时间戳
+					ts = currentTime.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
+					cv2.putText(frame, "{}".format(ts), (10, frame.shape[0] - 10), cv2.FONT_HERSHEY_SIMPLEX,
+						0.45, (0, 0, 255), 1)
 
 				elif inputType == "network":
-					ts = currentTime.strftime("%H:%M:%S.%f")[:-3]
-
-					# 在帧上绘制对应的网络视频流设备名称
+					# 在帧上绘制对应的网络视频流名称和时间戳
+					ts = currentTime.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
 					cv2.putText(frame, rpiName, (10, 20),
-						cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 0, 255), 1)
+						cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
+					cv2.putText(frame, "{}".format(ts), (10, frame.shape[0] - 10), cv2.FONT_HERSHEY_SIMPLEX,
+						0.45, (0, 0, 255), 1)
 
-					# update the new frame in the frame dictionary
+					# 更新帧记录中的新帧
 					frameDict[rpiName] = frame
 
-					# build a montage using images in the frame dictionary
+					# 使用帧记录中的图像构建分屏显示
 					montages = build_montages(frameDict.values(), (w1, h1), (mW, mH))
 
 				# 如果画面中有运动
@@ -868,15 +890,15 @@ def startCapture(fileList, jsonPath, showVideo, saveLog, inputType, inputFiles, 
 							cv2.imwrite(t.path, frame)
 
 						naming = "{savePath}{autoPath}{timestamp}".format(
-							savePath=savePath, autoPath=autoPath, timestamp=ts.replace(':', '_').replace('.', '_'))
+							savePath=savePath, autoPath=autoPath, timestamp=ts.replace(':', '_').replace('.', '_').replace(' ', '_').replace('-', '_'))
 						namingAndAnnotation = "{savePath}{autoPath}{annotationPath}{timestamp}".format(
-							savePath=savePath, autoPath=autoPath, annotationPath=annotationPath, timestamp=ts.replace(':', '_').replace('.', '_'))
+							savePath=savePath, autoPath=autoPath, annotationPath=annotationPath, timestamp=ts.replace(':', '_').replace('.', '_').replace(' ', '_').replace('-', '_'))
 
 						try:
 							naming2 = "{savePath}{autoPath}{rpiName}{timestamp}".format(
-								savePath=savePath, autoPath=autoPath, rpiName=rpiName + "/", timestamp=ts.replace(':', '_').replace('.', '_'))
+								savePath=savePath, autoPath=autoPath, rpiName=rpiName + "/", timestamp=ts.replace(':', '_').replace('.', '_').replace(' ', '_').replace('-', '_'))
 							namingAndAnnotation2 = "{savePath}{autoPath}{rpiName}{annotationPath}{timestamp}".format(
-								savePath=savePath, autoPath=autoPath, rpiName=rpiName + "/", annotationPath=annotationPath, timestamp=ts.replace(':', '_').replace('.', '_'))
+								savePath=savePath, autoPath=autoPath, rpiName=rpiName + "/", annotationPath=annotationPath, timestamp=ts.replace(':', '_').replace('.', '_').replace(' ', '_').replace('-', '_'))
 						except UnboundLocalError:
 							pass
 
@@ -987,17 +1009,20 @@ def startCapture(fileList, jsonPath, showVideo, saveLog, inputType, inputFiles, 
 					cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
 				fpsTimer.update()
 
-				# 如果当前时间减去最近活动设备检查的时间大于规定的阈值，则检查网络视频流设备状态
+				# 如果当前时间减去最近活视频流检查的时间大于规定的阈值，则检查网络视频流状态
 				if (datetime.datetime.now() - lastActiveCheck).seconds > ACTIVE_CHECK_SECONDS:
-					# 循环遍历所有以前处于活动状态的设备
+					# 循环遍历所有以前处于活动状态的视频流
+
 					for (rpiName, ts) in list(lastActive.items()):
-						# 如果设备最近未处于活动状态，从上一个活动记录和帧记录中删除该设备
+
+						# 如果视频流最近未处于活动状态，从上一个活动记录和帧记录中删除该视频流
 						if (datetime.datetime.now() - ts).seconds > ACTIVE_CHECK_SECONDS:
-							print("\n[i] 已从设备 {} 断开连接。\n".format(rpiName))
+							print(Fore.RED + "\n[x] 断开连接 {}。".format(rpiName))
+							print(Style.RESET_ALL) 
 							lastActive.pop(rpiName)
 							frameDict.pop(rpiName)
 
-					# 将最近活动设备检查时间设置为当前时间
+					# 将最近活动视频流检查时间设置为当前时间
 					lastActiveCheck = datetime.datetime.now()
 
 				# 检查用户是否设置在屏幕上显示视频画面
@@ -1030,13 +1055,16 @@ def startCapture(fileList, jsonPath, showVideo, saveLog, inputType, inputFiles, 
 						if inputType == "files" or inputType == "folder":
 							print(Style.RESET_ALL + "    {} 的采集提前结束。".format(f))
 
+						if inputType == "network":
+							stopCapture()
+
 						if saveCounter != 0:
 							print(Style.RESET_ALL + "     - 总共采集：{} 张图像".format(saveCounter))
 							print("     - 保存位置：{}{}".format(savePath, autoPath))
 							print("     - 采集用时：{}".format(datetime.timedelta(seconds = fpsTimer.elapsed())))
 							print("     - 平均帧率：{:.2f} fps".format(fpsTimer.fps()))
 						else:
-							print("    本次没有采集到图像。")
+							print(Style.RESET_ALL + "    本次没有采集到图像。")
 
 						print("\a")
 						break
@@ -1068,7 +1096,8 @@ def startCapture(fileList, jsonPath, showVideo, saveLog, inputType, inputFiles, 
 		x2 = []
 		y1 = []
 
-		plt.rcParams['font.sans-serif']=['Microsoft YaHei'] # 用来正常显示中文
+		# 用来正常显示中文
+		plt.rcParams['font.sans-serif']=['Microsoft YaHei']
 
 		if inputType == "files" or inputType == "folder":
 			with open(savePath + autoPath + 'vinfo.csv', 'r', encoding='utf-8') as csvfile:

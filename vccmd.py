@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 # Xiangzhen Lu
-# ver 200715.1435
+# ver 201013.2100
 
 # 用法
 
@@ -25,6 +25,7 @@ pythonw vccmd.py -i files -p input/example_01.mp4
 '''
 
 # 导入必要的包
+import threading                              # 多线程支持
 import argparse								  # 命令行参数
 import warnings								  # 系统警告信息
 import sys									  # 系统操作
@@ -36,6 +37,7 @@ from os import listdir						  # 文件列表
 from os.path import isfile, join			  # 文件操作
 from colorama import init, Fore, Back, Style  # 在终端输出彩色文字
 from xiangzhenlu import videocapture as vc	  # 采集视频中动态的图像
+from xiangzhenlu import videostream as vs     # 串流网络视频流
 
 # 构造命令行参数解析器并解析参数
 ap = argparse.ArgumentParser()
@@ -49,7 +51,6 @@ args = vars(ap.parse_args())
 
 # 过滤警告并加载配置
 warnings.filterwarnings("ignore")
-
 init(convert=True)
 
 if (args.get("input") == "folder" or args.get("input") == "files") and args.get("path") is None:
@@ -59,21 +60,6 @@ if (args.get("input") == "folder" or args.get("input") == "files") and args.get(
 	sys.exit(0)
 else:
 	pass
-
-# 获取本机的 IP 地址
-def get_host_ip():
-    try:
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        s.connect(('8.8.8.8', 80))
-        ip = s.getsockname()[0]
-    finally:
-        s.close()
-    return ip
-
-try:
-	ipaddr = get_host_ip()
-except:
-	ipaddr = "（未知）"
 
 # 从参数读取并决定用户设置文件
 if args.get("conf", None) is None:
@@ -109,6 +95,7 @@ minArea = conf["min_area"]
 jsonCreated = conf["json_created"]
 jsonNotes = conf["json_notes"]
 fileList = []
+streamList = []
 
 try:
 	if inputType == "folder":
@@ -126,6 +113,13 @@ if sys.executable.endswith("pythonw.exe"):
 	sys.stdout = open(os.devnull, "w")
 	sys.stderr = open(os.path.join(os.getenv("TEMP"), "stderr-"+os.path.basename(sys.argv[0])), "w")
 
+# 网络视频流清单初始化
+try:
+	t = open("streams.txt","r")
+
+except FileNotFoundError:
+	t = open("streams.txt","w")
+
 # 显示欢迎信息
 print("""
 
@@ -138,16 +132,10 @@ print("""
  \___/ |_| \__,_| \___| \___/   \____/ \__,_|| .__/  \__| \__,_||_|    \___||_|   
                                              | |                                  
 *******************************************  |_|  ********************************
-（主程序 / 服务器端）
 
 
 [i] 本程序将采集指定输入源中包含动态的图像。
-
-    如果选择了网络视频流作为输入源，您需要：
-     1. 按 y 运行本程序
-     2. 在相应设备上运行 video-capturer 客户端：client.py
-     3. 通过客户端连接到本机的 IP 地址：{}
-""".format(ipaddr))
+""")
 
 # 设置循环
 i = 0
@@ -159,11 +147,46 @@ while i == 0:
 	if answer == "y":
 		gui = False
 		i = 1
-		vc.startCapture(fileList, jsonPath, showVideo, saveLog, inputType, inputFiles, inputFolder, savePath, annotationType, readFrames, captureType, captureImages, minMotionFrames, minDeltaThresh, minArea, jsonCreated, jsonNotes, gui, i)
+
+		if inputType == "network":
+			# 网络视频流清单初始化
+			t = open("streams.txt","r")
+			lines = t.readlines()
+
+			for line in lines:
+				line = line.strip()
+				if "://" not in line:
+					if line == "":
+						pass
+					else:
+						print(Fore.RED + "\n\n[x] 您的网络视频流 URL 中包含不合法的字符。\n    请检查 URL 是否正确。\n    本次采集将中止。")
+						print(Style.RESET_ALL + "\a")
+						i = 1
+						sys.exit(0)
+				else:
+					streamList.append(line)
+
+			if len(streamList) == 0:
+				print(Fore.RED + "\n\n[x] 您的网络视频流 URL 中包含不合法的字符。\n    请检查 URL 是否正确。\n    本次采集将中止。")
+				print(Style.RESET_ALL + "\a")
+				i = 1
+				sys.exit(0)
+
+			t.close()
+
+			t1 = threading.Thread(target=vs.startStream)
+			t1.start()
+
+			t2 = threading.Thread(target=vc.startCapture, args=(fileList, jsonPath, showVideo, saveLog, inputType, inputFiles, inputFolder, savePath, annotationType, readFrames, captureType, captureImages, minMotionFrames, minDeltaThresh, minArea, jsonCreated, jsonNotes, gui, i))
+			t2.daemon = True
+			t2.start()
+		
+		else:
+			vc.startCapture(fileList, jsonPath, showVideo, saveLog, inputType, inputFiles, inputFolder, savePath, annotationType, readFrames, captureType, captureImages, minMotionFrames, minDeltaThresh, minArea, jsonCreated, jsonNotes, gui, i)
 
 	elif answer == "n":
-		print("\n\n[x] 您已取消采集。")
-		print("\a")
+		print(Fore.RED + "\n\n[i] 您已取消采集。")
+		print(Style.RESET_ALL + "\a")
 		i = 1
 
 	else:

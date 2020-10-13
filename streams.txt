@@ -1,0 +1,6 @@
+http://freja.hiof.no:1935/rtplive/_definst_/hessdalen03.stream/playlist.m3u8
+rtsp://170.93.143.139/rtplive/470011e600ef003a004ee33696235daa
+http://wmccpinetop.axiscam.net/mjpg/video.mjpg
+http://208.72.70.171:80/mjpg/video.mjpg
+http://158.58.130.148:80/mjpg/video.mjpg
+http://210.148.114.53/-wvhttp-01-/GetOneShot?image_size=640x480&frame_count=1000000000

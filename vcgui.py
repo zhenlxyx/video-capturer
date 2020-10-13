@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 # Xiangzhen Lu
-# ver 200715.1435
+# ver 201013.2100
 
 # 用法
 
@@ -10,6 +10,7 @@ pythonw vcgui.py
 '''
 
 # 导入必要的包
+import threading                              # 多线程支持
 import warnings								  # 系统警告信息
 import datetime								  # 时间戳
 import sys						    		  # 系统操作
@@ -17,6 +18,7 @@ import platform                               # 多操作系统支持
 import json									  # 用户配置
 import time									  # 时间操作
 import os									  # 文件和文件夹操作
+import subprocess                             # Mac 和 UNIX 支持
 import socket								  # 网络操作
 import tkinter as tk                          # 用户界面
 import tkinter.ttk as ttk                     # 高级用户界面
@@ -29,6 +31,7 @@ from tkinter.filedialog import askdirectory, askopenfilenames, askopenfilename, 
                                               # 打开和保存文件
 from colorama import init, Fore, Back, Style  # 在终端输出彩色文字
 from xiangzhenlu import videocapture as vc	  # 采集视频中动态的图像
+from xiangzhenlu import videostream as vs     # 串流网络视频流
 
 # 初始化
 i = 0
@@ -36,49 +39,43 @@ warnings.filterwarnings("ignore")
 init(convert=True)
 fileList = []
 fileCount = len(fileList)
+streamList = []
+rpiNames = ["Stream 1", "Stream 2", "Stream 3", "Stream 4", "Stream 5", "Stream 6"]
 
 # 确保 pythonw 静默模式可以在 Windows 上运行
 if sys.executable.endswith("pythonw.exe"):
 	sys.stdout = open(os.devnull, "w")
 	sys.stderr = open(os.path.join(os.getenv("TEMP"), "stderr-"+os.path.basename(sys.argv[0])), "w")
 
-# 获取本机的 IP 地址
-def get_host_ip():
+# 网络视频流清单初始化函数
+def initializeStreamList():
     try:
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        s.connect(('8.8.8.8', 80))
-        ip = s.getsockname()[0]
-    finally:
-        s.close()
-    return ip
+        t = open("streams.txt","r")
+        lines = t.readlines()
 
-try:
-	ipaddr = get_host_ip()
-except:
-	ipaddr = "（未知）"
+        for line in lines:
+            line = line.strip()
+            if line != "" and "://" in line:
+                streamList.append(line)
+
+        for stream in streamList:
+            if stream == "":
+                streamList.remove(stream)
+            
+            try:
+                streamLb.insert("end", "(" + rpiNames[streamList.index(stream)] + ") " + stream)
+            except IndexError:
+                pass
+            except ValueError:
+                pass
+
+        t.close()
+
+    except FileNotFoundError:
+        t = open("streams.txt","w")
+        initializeStreamList()
 
 # 开始采集函数
-def start():
-    startBtn.configure(state="disabled")
-    inputFolderRBtn.configure(state="disabled")
-    inputFolderEnt.configure(state="disabled")
-    inputFolderBtn.configure(state="disabled")
-    inputFilesRBtn.configure(state="disabled")
-    fileLb.configure(state="disabled")
-    inputFilesBtn.configure(state="disabled")
-    inputFilesClearBtn.configure(state="disabled")
-    webcamRBtn.configure(state="disabled")
-    networkRBtn.configure(state="disabled")
-    openJsonRBtn.configure(state="disabled")
-    openJsonEnt.configure(state="disabled")
-    openJsonBtn.configure(state="disabled")
-    newJsonRBtn.configure(state="disabled")
-    newJsonEnt.configure(state="disabled")
-    newJsonBtn.configure(state="disabled")
-    modifyLnk.bind("<Button-1>", doNothing)
-    modifyLnk.configure(foreground="grey")
-    capture()
-
 def capture():
     jsonPath = openJsonEnt2.get()
 
@@ -115,7 +112,49 @@ def capture():
 
     gui = True
     i = 1
-    vc.startCapture(fileList, jsonPath, showVideo, saveLog, inputType, inputFiles, inputFolder, savePath, annotationType, readFrames, captureType, captureImages, minMotionFrames, minDeltaThresh, minArea, jsonCreated, jsonNotes, gui, i)
+
+    disableStatus()
+
+    if inputType == "network":
+        t1 = threading.Thread(target=vs.startStream)
+        t1.daemon = True
+        t1.start()
+
+        t2 = threading.Thread(target=vc.startCapture, args=(fileList, jsonPath, showVideo, saveLog, inputType, inputFiles, inputFolder, savePath, annotationType, readFrames, captureType, captureImages, minMotionFrames, minDeltaThresh, minArea, jsonCreated, jsonNotes, gui, i))
+        t2.daemon = True
+        t2.start()
+    
+    else:
+        vc.startCapture(fileList, jsonPath, showVideo, saveLog, inputType, inputFiles, inputFolder, savePath, annotationType, readFrames, captureType, captureImages, minMotionFrames, minDeltaThresh, minArea, jsonCreated, jsonNotes, gui, i)
+        resumeStatus()
+
+    return
+
+# 禁用窗口控件函数
+def disableStatus():
+    startBtn.configure(state="disabled")
+    inputFolderRBtn.configure(state="disabled")
+    inputFolderEnt.configure(state="disabled")
+    inputFolderBtn.configure(state="disabled")
+    inputFilesRBtn.configure(state="disabled")
+    fileLb.configure(state="disabled")
+    inputFilesBtn.configure(state="disabled")
+    inputFilesClearBtn.configure(state="disabled")
+    webcamRBtn.configure(state="disabled")
+    networkRBtn.configure(state="disabled")
+    streamLb.configure(state="disabled")
+    modifyStreamsBtn.configure(state="disabled")
+    openJsonRBtn.configure(state="disabled")
+    openJsonEnt.configure(state="disabled")
+    openJsonBtn.configure(state="disabled")
+    newJsonRBtn.configure(state="disabled")
+    newJsonEnt.configure(state="disabled")
+    newJsonBtn.configure(state="disabled")
+    modifyLnk.bind("<Button-1>", doNothing)
+    modifyLnk.configure(foreground="grey")
+
+# 启用窗口控件函数
+def resumeStatus():
     startBtn.configure(state="normal")
     inputFolderRBtn.configure(state="normal")
     inputFolderEnt.configure(state="normal")
@@ -126,6 +165,8 @@ def capture():
     inputFilesClearBtn.configure(state="normal")
     webcamRBtn.configure(state="normal")
     networkRBtn.configure(state="normal")
+    streamLb.configure(state="normal")
+    modifyStreamsBtn.configure(state="normal")
     openJsonRBtn.configure(state="normal")
     openJsonEnt.configure(state="normal")
     openJsonBtn.configure(state="normal")
@@ -134,11 +175,18 @@ def capture():
     newJsonBtn.configure(state="normal")
     modifyLnk.bind("<Button-1>", modifyJson)
     modifyLnk.configure(foreground="#0080ff")
-    return
 
 # 闲置函数
 def doNothing(event):
     pass
+
+# 选定从文件夹采集函数
+def selectAddFolder():
+    inputVar.set("folder")
+    if inputFolderEnt.get() != "" and jsonVar.get() == "open" and openJsonEnt.get() != "":
+        startBtn.configure(state="normal")
+    else:
+        startBtn.configure(state="disabled")
 
 # 添加输入文件夹函数
 def addFolder():
@@ -152,23 +200,15 @@ def addFolder():
 
     normalizer()
 
-# 添加输出文件夹函数
-def addOutputFolder():
-    filePath = askdirectory()
+# 选定从视频文件采集函数
+def selectAddFiles():
+    inputVar.set("files")
+    if len(fileLb.get("0", "end")) == 0:
+        startBtn.configure(state="disabled")
+    elif len(fileLb.get("0", "end")) != 0 and jsonVar.get() == "open" and openJsonEnt.get() != "":
+        startBtn.configure(state="normal")
 
-    if not filePath:
-        return
-
-    outputFolderEnt.delete(0, "end")
-    outputFolderEnt.insert("end", filePath+"/")
-
-# 更新文件创建时间函数
-def updateTime():
-    currentTime = time.strftime("%Y-%m-%d %H:%M")
-    jsonCreatedEnt.delete(0, "end")
-    jsonCreatedEnt.insert("end", currentTime)
-
-# 添加输入文件函数
+# 添加输入视频文件函数
 def addFiles():
     filePath = askopenfilenames(filetypes=[('视频文件', ('.mp4','.avi','.mov','.mpeg','.flv','.wmv'))])
 
@@ -192,20 +232,16 @@ def addFiles():
 
     normalizer()
 
-def selectAddFolder():
-    inputVar.set("folder")
-    if inputFolderEnt.get() != "" and jsonVar.get() == "open" and openJsonEnt.get() != "":
-        startBtn.configure(state="normal")
-    else:
-        startBtn.configure(state="disabled")
-
-def selectAddFiles():
+# 清空视频文件列表函数
+def clearFiles():
+    fileLb.delete(0, "end")
+    fileLb2.delete(0, "end")
+    del fileList[:]
+    inputFilesVar.set("以下 {} 个视频：".format(fileCount))
     inputVar.set("files")
-    if len(fileLb.get("0", "end")) == 0:
-        startBtn.configure(state="disabled")
-    elif len(fileLb.get("0", "end")) != 0 and jsonVar.get() == "open" and openJsonEnt.get() != "":
-        startBtn.configure(state="normal")
+    startBtn.configure(state="disabled")
 
+# 选定从本机摄像头采集函数
 def selectWebcam():
     inputVar.set("webcam")
     if jsonVar.get() == "open" and openJsonEnt.get() != "":
@@ -213,13 +249,35 @@ def selectWebcam():
     else:
         startBtn.configure(state="disabled")
 
+# 选定从网络视频流采集函数
 def selectNetwork():
     inputVar.set("network")
-    if jsonVar.get() == "open" and openJsonEnt.get() != "":
-        startBtn.configure(state="normal")
-    else:
+    if len(streamLb.get("0", "end")) == 0:
         startBtn.configure(state="disabled")
+    elif len(streamLb.get("0", "end")) != 0 and jsonVar.get() == "open" and openJsonEnt.get() != "":
+        startBtn.configure(state="normal")
 
+# 修改网络视频流函数
+def modifyStreams():
+    inputVar.set("network")
+    streamLb.delete(0, "end")
+    del streamList[:]
+    try:
+        subprocess.call(['open', '-a', 'TextEdit', "streams.txt"])
+    except:
+        os.system(r"streams.txt")
+    initializeStreamList()
+    streamCount = len(streamList)
+
+    if streamCount > 6:
+        streamCountAdjusted = 6
+    else:
+        streamCountAdjusted = streamCount
+
+    streamsVar.set("以下 {} 个网络视频流：".format(streamCountAdjusted))
+    selectNetwork()
+
+# 选定打开现有设置文件函数
 def selectOpenJson():
     jsonVar.set("open")
     if inputVar.get() == "folder" and inputFolderEnt.get() != "" and openJsonEnt.get() != "":
@@ -228,20 +286,8 @@ def selectOpenJson():
         startBtn.configure(state="normal")
     elif inputVar.get() == "webcam" and openJsonEnt.get() != "":
         startBtn.configure(state="normal")
-    elif inputVar.get() == "network" and openJsonEnt.get() != "":
+    elif inputVar.get() == "network" and len(streamLb.get("0", "end")) != 0 and openJsonEnt.get() != "":
         startBtn.configure(state="normal")
-
-def selectNewJson():
-    jsonVar.set("new")
-    startBtn.configure(state="disabled")
-
-def clearFiles():
-    fileLb.delete(0, "end")
-    fileLb2.delete(0, "end")
-    del fileList[:]
-    inputFilesVar.set("以下 {} 个视频：".format(fileCount))
-    inputVar.set("files")
-    startBtn.configure(state="disabled")
 
 # 打开设置文件函数
 def addJson():
@@ -251,6 +297,11 @@ def addJson():
         return
     
     openJson(jsonPath)
+
+# 选定新建设置文件函数
+def selectNewJson():
+    jsonVar.set("new")
+    startBtn.configure(state="disabled")
 
 # 新建设置文件函数
 def newJson():
@@ -271,7 +322,7 @@ def newJson():
         "annotation_type": "pascalvoc",
         "read_frames": 5,
         "capture_type": "avg",
-        "capture_images": ["all", 2, 2],
+        "capture_images": ["all", 2, 0],
         "min_motion_frames": 1,
         "min_delta_thresh": 5,
         "min_area": 1500,
@@ -283,6 +334,11 @@ def newJson():
         json.dump(jsonDict, f, ensure_ascii=False, indent=4)
 
     openJson(jsonPath)
+
+# 新建设置文件文本框占位符清空函数
+def clearContent(event):
+    newJsonEnt.delete(0, "end")
+    jsonVar.set("new")
 
 # 修改设置文件函数
 def modifyJson(event):
@@ -367,6 +423,7 @@ def saveJson(event):
     paraFrm2.place(relx=0.04, rely=0.464, relheight=0.513
             , relwidth=0.931, bordermode='ignore')
 
+# 加载设置文件函数
 def openJson(jsonPath):
     try:
         with open(jsonPath, 'r', encoding='utf-8') as j:
@@ -659,6 +716,16 @@ def changeAnnotationType(*args):
 def changeSaveLog(*args):
     saveLogVar.get()
 
+# 添加输出文件夹函数
+def addOutputFolder():
+    filePath = askdirectory()
+
+    if not filePath:
+        return
+
+    outputFolderEnt.delete(0, "end")
+    outputFolderEnt.insert("end", filePath+"/")
+
 # 修改视频读法函数
 def changeReadFrames(*args):
     readFramesVar.get()
@@ -686,6 +753,12 @@ def changeCaptureImagesPara1(*args):
         captureImagesPara2Frm_all.grid_forget()
         captureImagesPara2Frm_frame.grid_forget()
 
+# 更新文件创建时间函数
+def updateTime():
+    currentTime = time.strftime("%Y-%m-%d %H:%M")
+    jsonCreatedEnt.delete(0, "end")
+    jsonCreatedEnt.insert("end", currentTime)
+
 # 决定各界面控件的启用和禁用的一般原则
 def normalizer():
     if inputVar.get() == "folder" and inputFolderEnt.get() != "" and jsonVar.get() == "open" and openJsonEnt.get() != "":
@@ -694,7 +767,7 @@ def normalizer():
         startBtn.configure(state="normal")
     elif inputVar.get() == "webcam" and jsonVar.get() == "open" and openJsonEnt.get() != "":
         startBtn.configure(state="normal")
-    elif inputVar.get() == "network" and jsonVar.get() == "open" and openJsonEnt.get() != "":
+    elif inputVar.get() == "network" and len(streamLb.get("0", "end")) != 0 and jsonVar.get() == "open" and openJsonEnt.get() != "":
         startBtn.configure(state="normal")
     else:
         startBtn.configure(state="disabled")
@@ -703,11 +776,6 @@ def normalizer():
 def scrollEvent(event):
     paraCvs.configure(scrollregion=paraCvs.bbox("all"),width=400,height=200)
     paraCvs2.configure(scrollregion=paraCvs2.bbox("all"),width=400,height=200)
-
-# 新建设置文件文本框占位符清空函数
-def clearContent(event):
-    newJsonEnt.delete(0, "end")
-    jsonVar.set("new")
 
 window = tk.Tk()
 
@@ -725,7 +793,7 @@ window.geometry("800x530+320+50")
 window.minsize(120, 1)
 window.maxsize(3364, 1061)
 window.resizable(0, 0)
-window.title("视频图像采集器（主程序 / 服务器端）")
+window.title("Video Capturer")
 window.iconphoto(True, tk.PhotoImage(file='./xiangzhenlu/app_icon.png'))
 
 # 采集来源标签框架
@@ -773,7 +841,7 @@ inputFilesRBtn.configure(command=selectAddFiles)
 
 # 输入文件列表框
 fileLb = Listbox(sourceLf)
-fileLb.place(relx=0.107, rely=0.303, relheight=0.384, relwidth=0.669
+fileLb.place(relx=0.107, rely=0.303, relheight=0.234, relwidth=0.669
         , bordermode='ignore')
 fileLb.configure(relief="flat")
 scrollBar = Scrollbar(fileLb)
@@ -799,29 +867,52 @@ inputFilesClearBtn.place(relx=0.789, rely=0.383, height=28, width=65
 inputFilesClearBtn.configure(text='''清空''')
 inputFilesClearBtn.configure(command=clearFiles)
 
+# 本机摄像头单选框
 webcamRBtn = tk.Radiobutton(sourceLf)
-webcamRBtn.place(relx=0.027, rely=0.708, relheight=0.069
+webcamRBtn.place(relx=0.027, rely=0.558, relheight=0.069
         , relwidth=0.925, bordermode='ignore')
 webcamRBtn.configure(text='''本机摄像头''')
 webcamRBtn.configure(value="webcam")
 webcamRBtn.configure(variable=inputVar)
 webcamRBtn.configure(command=selectWebcam)
 
+# 网络视频流列表框
+streamLb = Listbox(sourceLf)
+streamLb.place(relx=0.107, rely=0.721, relheight=0.234, relwidth=0.669
+        , bordermode='ignore')
+streamLb.configure(relief="flat")
+scrollBar = Scrollbar(streamLb)
+scrollBar.pack(side="right", fill="y")
+scrollBar.config(command=streamLb.yview)
+streamLb.config(yscrollcommand=scrollBar.set)
+streamLb.delete(0, "end")
+
+initializeStreamList()
+
+# 网络视频流修改按钮
+modifyStreamsBtn = tk.Button(sourceLf)
+modifyStreamsBtn.place(relx=0.789, rely=0.721, height=28, width=65
+        , bordermode='ignore')
+modifyStreamsBtn.configure(text='''修改''')
+modifyStreamsBtn.configure(command=modifyStreams)
+
+# 网络视频流单选框
+streamsVar = tk.StringVar()
+streamCount = len(streamList)
+
+if streamCount > 6:
+    streamCountAdjusted = 6
+else:
+    streamCountAdjusted = streamCount
+
+streamsVar.set("以下 {} 个网络视频流：".format(streamCountAdjusted))
 networkRBtn = tk.Radiobutton(sourceLf)
-networkRBtn.place(relx=0.027, rely=0.789, relheight=0.069
+networkRBtn.place(relx=0.027, rely=0.639, relheight=0.069
         , relwidth=0.925, bordermode='ignore')
-networkRBtn.configure(text='''网络视频流''')
 networkRBtn.configure(value="network")
 networkRBtn.configure(variable=inputVar)
+networkRBtn.configure(textvariable=streamsVar)
 networkRBtn.configure(command=selectNetwork)
-
-networkMsg = tk.Message(sourceLf)
-networkMsg.place(relx=0.053, rely=0.871, relheight=0.108
-        , relwidth=0.925, bordermode='ignore')
-networkMsg.configure(width=347)
-networkMsg.configure(text='''您需要：
-  1. 在相应设备上运行 video-capturer 客户端：client.py
-  2. 通过客户端连接到本机的 IP 地址：{}'''.format(ipaddr))
 
 # 采集选项标签框架
 configLf = tk.LabelFrame(window)
@@ -1123,7 +1214,7 @@ jsonNotesTxt.configure(spacing3="1")
 startBtn = tk.Button(window)
 startBtn.place(relx=0.413, rely=0.887, height=38, width=139)
 startBtn.configure(text='''▶  开始采集''')
-startBtn.configure(command=start)
+startBtn.configure(command=capture)
 startBtn.configure(state="disabled")
 
 # 根据时间切换深色 / 浅色模式
@@ -1138,7 +1229,8 @@ if currentHour >= 19 or currentHour <= 7:
     inputFilesClearBtn.configure(background="#606060", activebackground="#909090", highlightbackground="#606060", foreground="#ffffff", activeforeground="#ffffff", borderwidth=0, relief="flat")
     webcamRBtn.configure(background="#383838", activebackground="#606060", highlightbackground="#383838", foreground="#ffffff", activeforeground="#ffffff", selectcolor="#383838", anchor="w", font="-family {Microsoft YaHei} -size 11 -weight normal -slant roman -underline 0 -overstrike 0")
     networkRBtn.configure(background="#383838", activebackground="#606060", highlightbackground="#383838", foreground="#ffffff", activeforeground="#ffffff", selectcolor="#383838", anchor="w", font="-family {Microsoft YaHei} -size 11 -weight normal -slant roman -underline 0 -overstrike 0")
-    networkMsg.configure(background="#383838", foreground="#ffffff")
+    streamLb.configure(background="#383838", highlightbackground="#ffffff", foreground="#ffffff", highlightthickness=1)
+    modifyStreamsBtn.configure(background="#606060", activebackground="#909090", highlightbackground="#606060", foreground="#ffffff", activeforeground="#ffffff", borderwidth=0, relief="flat")
     configLf.configure(background="#383838", foreground="#ffffff", font="-family {Microsoft YaHei} -size 11 -weight normal -slant roman -underline 0 -overstrike 0")
     openJsonRBtn.configure(background="#383838", activebackground="#606060", highlightbackground="#383838", foreground="#ffffff", activeforeground="#ffffff", selectcolor="#383838", anchor="w", font="-family {Microsoft YaHei} -size 11 -weight normal -slant roman -underline 0 -overstrike 0")
     openJsonEnt.configure(background="#383838", readonlybackground="#383838", disabledbackground="#383838", highlightbackground="#ffffff", foreground="#ffffff", highlightthickness=1, relief="flat")
@@ -1201,7 +1293,8 @@ else:
     inputFilesClearBtn.configure(background="#E4E4E4", activebackground="#909090", highlightbackground="#E4E4E4", foreground="#1F1C19", activeforeground="#1F1C19", borderwidth=0, relief="flat")
     webcamRBtn.configure(background="#ffffff", activebackground="#E4E4E4", highlightbackground="#ffffff", foreground="#1F1C19", activeforeground="#1F1C19", selectcolor="#ffffff", anchor="w", font="-family {Microsoft YaHei} -size 11 -weight normal -slant roman -underline 0 -overstrike 0")
     networkRBtn.configure(background="#ffffff", activebackground="#E4E4E4", highlightbackground="#ffffff", foreground="#1F1C19", activeforeground="#1F1C19", selectcolor="#ffffff", anchor="w", font="-family {Microsoft YaHei} -size 11 -weight normal -slant roman -underline 0 -overstrike 0")
-    networkMsg.configure(background="#ffffff", foreground="#1F1C19")
+    streamLb.configure(background="#ffffff", highlightbackground="#1F1C19", foreground="#1F1C19", highlightthickness=1)
+    modifyStreamsBtn.configure(background="#E4E4E4", activebackground="#909090", highlightbackground="#E4E4E4", foreground="#1F1C19", activeforeground="#1F1C19", borderwidth=0, relief="flat")
     configLf.configure(background="#ffffff", foreground="#1F1C19", font="-family {Microsoft YaHei} -size 11 -weight normal -slant roman -underline 0 -overstrike 0")
     openJsonRBtn.configure(background="#ffffff", activebackground="#E4E4E4", highlightbackground="#ffffff", foreground="#1F1C19", activeforeground="#1F1C19", selectcolor="#ffffff", anchor="w", font="-family {Microsoft YaHei} -size 11 -weight normal -slant roman -underline 0 -overstrike 0")
     openJsonEnt.configure(background="#F0F0F0", readonlybackground="#F0F0F0", highlightbackground="#1F1C19", foreground="#1F1C19", highlightthickness=1, relief="flat")
