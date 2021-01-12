@@ -1,6 +1,9 @@
-http://freja.hiof.no:1935/rtplive/_definst_/hessdalen03.stream/playlist.m3u8
-rtsp://170.93.143.139/rtplive/470011e600ef003a004ee33696235daa
-http://wmccpinetop.axiscam.net/mjpg/video.mjpg
-http://208.72.70.171:80/mjpg/video.mjpg
-http://158.58.130.148:80/mjpg/video.mjpg
-http://210.148.114.53/-wvhttp-01-/GetOneShot?image_size=640x480&frame_count=1000000000
+http://mw-otaru.miemasu.net/nphMotionJpeg?resolution=640x480
+http://weathercam.gsis.edu.hk/axis-cgi/mjpg/video.cgi
+http://81.8.143.33/mjpg/video.mjpg
+http://elwoodsc.axiscam.net:8201/mjpg/video.mjpg
+http://146.83.206.15/image
+http://vefmyndavel.akureyri.is/mjpg/video.mjpg
+http://192.82.150.11:8083/mjpg/video.mjpg
+http://cctvvrk.egat.com/axis-cgi/mjpg/video.cgi
+http://141.48.169.7/mjpg/video.mjpg

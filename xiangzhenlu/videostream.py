@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 # Xiangzhen Lu
-# ver 201013.2100
+# ver 210112.1515
 
 # 导入必要的包
 from imutils.video import VideoStream		  # 摄像头作为输入源
@@ -31,7 +31,7 @@ def startStream():
 		if path == "" or "://" not in path:
 			paths.remove(path)
 
-	rpiNames = ["Stream 1", "Stream 2", "Stream 3", "Stream 4", "Stream 5", "Stream 6"]
+	rpiNames = ["Stream 1", "Stream 2", "Stream 3", "Stream 4", "Stream 5", "Stream 6", "Stream 7", "Stream 8", "Stream 9"]
 
 	while True:
 		# 从网络视频流读取帧并将其发送到 Video Capturer

@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 # Xiangzhen Lu
-# ver 201013.2100
+# ver 210112.1515
 
 # 导入必要的包
 import sys									  # 将终端输出保存到日志
@@ -535,7 +535,7 @@ def startCapture(fileList, jsonPath, showVideo, saveLog, inputType, inputFiles, 
 
 			# 分配每个网络视频流分屏的宽度和高度，以便我们可以在单个“仪表板”中查看所有传入帧
 			mW = 3
-			mH = 2
+			mH = 3
 
 			if captureType == "avg":
 				motions = BasicMotionDetector(deltaThresh=minDeltaThresh, minArea=minArea)

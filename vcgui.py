@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 # Xiangzhen Lu
-# ver 201013.2100
+# ver 210112.1515
 
 # 用法
 
@@ -40,7 +40,7 @@ init(convert=True)
 fileList = []
 fileCount = len(fileList)
 streamList = []
-rpiNames = ["Stream 1", "Stream 2", "Stream 3", "Stream 4", "Stream 5", "Stream 6"]
+rpiNames = ["Stream 1", "Stream 2", "Stream 3", "Stream 4", "Stream 5", "Stream 6", "Stream 7", "Stream 8", "Stream 9"]
 
 # 确保 pythonw 静默模式可以在 Windows 上运行
 if sys.executable.endswith("pythonw.exe"):
@@ -269,8 +269,8 @@ def modifyStreams():
     initializeStreamList()
     streamCount = len(streamList)
 
-    if streamCount > 6:
-        streamCountAdjusted = 6
+    if streamCount > 9:
+        streamCountAdjusted = 9
     else:
         streamCountAdjusted = streamCount
 
@@ -900,8 +900,8 @@ modifyStreamsBtn.configure(command=modifyStreams)
 streamsVar = tk.StringVar()
 streamCount = len(streamList)
 
-if streamCount > 6:
-    streamCountAdjusted = 6
+if streamCount > 9:
+    streamCountAdjusted = 9
 else:
     streamCountAdjusted = streamCount
 
