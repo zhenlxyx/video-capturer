@@ -9,8 +9,16 @@ ver 210313.2317
 
 * 现在 video-capturer 采用通用的方法安装依赖包，即：
 
+  在线安装
+  
   ```
   pip install -r requirements.txt
+  ```
+  
+  离线安装
+  
+  ```
+  pip install --no-index --find-links=/offlinepkg/ -r requirements.txt
   ```
 
 已知问题：
@@ -63,22 +71,23 @@ ver 210313.2317
 
 video-capturer 的默认结构如下：
 
-| 目录 / 文件       | 描述                           | 可设定 | 可删除 |
-| ----------------- | ------------------------------ | ------ | ------ |
-| [video-capturer]  | 根目录                         |        |        |
-| - [imagezmq]      | 图像采集过程中用到的包         |        |        |
-| - [input]         | “输入”目录                     | v      | v      |
-| - [log]           | 日志目录                       |        | v      |
-| - [output]        | “输出”目录                     | v      | v      |
-| - [pyimagesearch] | 图像采集过程中用到的包         |        |        |
-| - [xiangzhenlu]   | 图像采集过程中用到的包         |        |        |
-| - conf.json       | 图像采集的设置文件示例（默认） | v      |        |
-| - conf_2.json     | 图像采集的设置文件示例         | v      | v      |
-| - install.py      | 软件安装程序                   |        |        |
-| - README.md       | 软件说明文档                   |        |        |
-| - streams.txt     | 待采集的网络视频流 URL 列表    | v      |        |
-| - vccmd.py        | 软件主程序（CMD 版本）         |        |        |
-| - vcgui.py        | 软件主程序（GUI 版本）         |        |        |
+| 目录 / 文件        | 描述                           | 可设定 | 可删除 |
+| ------------------ | ------------------------------ | ------ | ------ |
+| [video-capturer]   | 根目录                         |        |        |
+| - [imagezmq]       | 图像采集过程中用到的包         |        |        |
+| - [input]          | “输入”目录                     | v      | v      |
+| - [log]            | 日志目录                       |        | v      |
+| - [offlinepkg]     | 软件依赖包离线安装包           |        |        |
+| - [output]         | “输出”目录                     | v      | v      |
+| - [pyimagesearch]  | 图像采集过程中用到的包         |        |        |
+| - [xiangzhenlu]    | 图像采集过程中用到的包         |        |        |
+| - conf.json        | 图像采集的设置文件示例（默认） | v      |        |
+| - conf_2.json      | 图像采集的设置文件示例         | v      | v      |
+| - README.md        | 软件说明文档                   |        |        |
+| - requirements.txt | 软件依赖包安装清单             |        |        |
+| - streams.txt      | 待采集的网络视频流 URL 列表    | v      |        |
+| - vccmd.py         | 软件主程序（CMD 版本）         |        |        |
+| - vcgui.py         | 软件主程序（GUI 版本）         |        |        |
 
 注意：与软件功能非直接相关的文件虽不在上述列表中，亦不可删除。
 
@@ -99,7 +108,12 @@ video-capturer 的默认结构如下：
    ```
 
    开始安装。安装完成后，即可开始使用 video-capturer。
-   
+
+注意：如果要离线安装依赖包，请键入以下命令（而不是上述命令）：
+
+```
+pip install --no-index --find-links=/offlinepkg/ -r requirements.txt
+```
 
 ## 采集图像
 
