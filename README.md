@@ -7,23 +7,7 @@ ver 210112.1515
 
 新增功能：
 
-<<<<<<< HEAD
-* 现在 video-capturer 采用通用的方法安装依赖包，即：
-
-  在线安装
-  
-  ```
-  pip install -r requirements.txt
-  ```
-  
-  离线安装
-  
-  ```
-  pip install --no-index --find-links=/offlinepkg/ -r requirements.txt
-  ```
-=======
 * 现在支持从多达 9 个带 URL 的网络视频流（例如 http:// 或 rtsp://）中采集动态图像的支持
->>>>>>> parent of 6ce0737 (Updated install mechanism)
 
 已知问题：
 
@@ -112,12 +96,6 @@ video-capturer 的默认结构如下：
    ```
 
    开始安装。安装完成后，即可开始使用 video-capturer。
-
-注意：如果要离线安装依赖包，请键入以下命令（而不是上述命令）：
-
-```
-pip install --no-index --find-links=/offlinepkg/ -r requirements.txt
-```
 
 注意：如果上述命令提示错误，请将 python 替换为 python3。
 
