@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 # Xiangzhen Lu
-# ver 210313.2317
+# ver 210112.1515
 
 # 导入必要的包
 from imutils.video import VideoStream		  # 摄像头作为输入源
